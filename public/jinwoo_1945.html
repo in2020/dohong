@@ -711,8 +711,8 @@
   }
 
   bombBtn.addEventListener('click', useBomb);
-  bombBtn.addEventListener('touchstart', (e)=>{ e.preventDefault(); }, {passive:false});
-  bombBtn.addEventListener('pointerdown', (e)=>{ e.preventDefault(); }, {passive:false});
+  // bombBtn.addEventListener('touchstart', (e)=>{ e.preventDefault(); }, {passive:false});
+  // bombBtn.addEventListener('pointerdown', (e)=>{ e.preventDefault(); }, {passive:false});
 
   function togglePause(){
     if(state === STATE.RUN){
