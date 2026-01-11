@@ -1,0 +1,1587 @@
+<!DOCTYPE html> 
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>푸딩jump</title>
+  <style>
+    body{
+      margin:0; overflow:hidden; user-select:none;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+
+      /* ===== Theme vars ===== */
+      --sky1:#77c8ff; --sky2:#bfe9ff; --sky3:#e7fbff;
+      --far1:#6b86b8; --far2:#425d8c;
+      --mid1:#4b7b55; --mid2:#2f5a3a;
+      --near1:#2f6b3d; --near2:#1f422a;
+      --starsOpacity: 0;
+
+      /* 🍮 Pudding base */
+      --puddingLight: #fff2cc;
+      --puddingDark:  #f2c94c;
+
+      background: linear-gradient(var(--sky1), var(--sky2) 55%, var(--sky3));
+    }
+
+    /* ===== High Quality Parallax Background ===== */
+    #bg{ position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+    #bg .sky{
+      position:absolute; inset:0;
+      background:
+        radial-gradient(circle at 50% 10%, rgba(255,255,255,0.55), rgba(255,255,255,0) 55%),
+        linear-gradient(var(--sky1), var(--sky2) 55%, var(--sky3));
+    }
+    #bg .sky::after{
+      content:""; position:absolute; inset:0; opacity: var(--starsOpacity);
+      background:
+        radial-gradient(circle at 10% 20%, rgba(255,255,255,.9) 0 1px, transparent 2px),
+        radial-gradient(circle at 22% 35%, rgba(255,255,255,.7) 0 1px, transparent 2px),
+        radial-gradient(circle at 40% 18%, rgba(255,255,255,.8) 0 1px, transparent 2px),
+        radial-gradient(circle at 55% 30%, rgba(255,255,255,.65) 0 1px, transparent 2px),
+        radial-gradient(circle at 70% 22%, rgba(255,255,255,.85) 0 1px, transparent 2px),
+        radial-gradient(circle at 88% 38%, rgba(255,255,255,.75) 0 1px, transparent 2px),
+        radial-gradient(circle at 18% 70%, rgba(255,255,255,.75) 0 1px, transparent 2px),
+        radial-gradient(circle at 62% 75%, rgba(255,255,255,.70) 0 1px, transparent 2px);
+      background-size: 520px 420px; background-repeat: repeat; mix-blend-mode: screen;
+    }
+    #bg .layer{ position:absolute; left:-10%; width:120%; will-change: transform; }
+    #bg .far{
+      height:52%; bottom: 18%;
+      background:
+        radial-gradient(120px 80px at 12% 78%, rgba(255,255,255,.10), rgba(255,255,255,0) 65%),
+        radial-gradient(160px 90px at 32% 85%, rgba(255,255,255,.08), rgba(255,255,255,0) 70%),
+        radial-gradient(200px 110px at 55% 82%, rgba(255,255,255,.10), rgba(255,255,255,0) 70%),
+        linear-gradient(to top, var(--far2), var(--far1));
+      clip-path: polygon(0% 90%, 10% 75%, 18% 82%, 28% 60%, 36% 70%, 46% 52%, 56% 68%, 68% 55%, 78% 72%, 88% 62%, 100% 78%, 100% 100%, 0% 100%);
+      opacity: .85;
+    }
+    #bg .mid{
+      height:56%; bottom: 8%;
+      background: linear-gradient(to top, var(--mid2), var(--mid1));
+      clip-path: polygon(0% 85%, 12% 78%, 22% 82%, 34% 70%, 46% 74%, 58% 64%, 70% 72%, 82% 66%, 92% 74%, 100% 70%, 100% 100%, 0% 100%);
+      opacity: .92;
+    }
+    #bg .near{
+      height:48%; bottom: -4%;
+      background:
+        radial-gradient(60px 40px at 18% 70%, rgba(255,255,255,.10), rgba(255,255,255,0) 70%),
+        radial-gradient(80px 50px at 40% 78%, rgba(255,255,255,.08), rgba(255,255,255,0) 70%),
+        radial-gradient(90px 55px at 72% 74%, rgba(255,255,255,.10), rgba(255,255,255,0) 70%),
+        linear-gradient(to top, var(--near2), var(--near1));
+      clip-path: polygon(0% 88%, 14% 84%, 28% 86%, 40% 80%, 55% 84%, 68% 78%, 82% 82%, 100% 76%, 100% 100%, 0% 100%);
+      opacity: .96;
+    }
+
+    /* ===== Player (Pudding) ===== */
+    #player{
+      position:absolute;
+      width: 54px; height: 54px;
+      transform: translate(-50%, -50%);
+      will-change: left, top, transform, filter;
+      z-index: 20;
+    }
+    .pudding{
+      width:100%; height:100%;
+      position: relative;
+      transform-origin: 50% 82%;
+      will-change: transform;
+      overflow: visible;
+      border-radius: 26px 26px 18px 18px;
+      background:
+        radial-gradient(circle at 35% 18%, rgba(255,255,255,0.60), rgba(255,255,255,0) 44%),
+        linear-gradient(to bottom, var(--puddingLight), var(--puddingDark));
+      box-shadow:
+        0 14px 26px rgba(0,0,0,0.18),
+        inset 0 -8px 0 rgba(0,0,0,0.10),
+        inset 0 4px 0 rgba(255,255,255,0.42);
+      filter: saturate(1.05);
+    }
+    .pudding::after{
+      content:"";
+      position:absolute; left:50%; bottom:-12px;
+      width: 64px; height: 18px;
+      transform: translateX(-50%);
+      border-radius: 999px;
+      background: radial-gradient(circle at 50% 50%, rgba(0,0,0,0.26), rgba(0,0,0,0) 70%);
+      z-index: -1;
+      pointer-events:none;
+    }
+    .pudding::before{
+      content:"";
+      position:absolute; left:6px; right:6px; top:3px;
+      height: 18px;
+      border-radius: 22px 22px 14px 14px;
+      background: linear-gradient(to bottom, rgba(255,255,255,0.26), rgba(255,255,255,0));
+      opacity: .95;
+      pointer-events:none;
+    }
+    .pudding .shine{
+      position:absolute; left:12px; top:12px;
+      width:20px; height:12px; border-radius: 50%;
+      background: rgba(255,255,255,0.55);
+      filter: blur(0.45px);
+      pointer-events:none;
+      opacity:.95;
+    }
+    .pudding .eyes{ position:absolute; inset:0; pointer-events:none; }
+    .pudding .eyes::before,
+    .pudding .eyes::after{
+      content:"";
+      position:absolute; top: 24px;
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: rgba(25,25,25,0.55);
+      box-shadow: inset 0 -1px 0 rgba(255,255,255,0.25);
+    }
+    .pudding .eyes::before{ left: 18px; }
+    .pudding .eyes::after { right: 18px; }
+
+    #player.jumping .pudding { animation: puddingJump .24s ease-out; }
+    #player.falling .pudding { animation: puddingFall .34s ease-in-out infinite alternate; }
+    #player.landed  .pudding { animation: puddingLand .20s ease-out; }
+    #player.running .pudding { animation: puddingRun  .18s ease-in-out infinite alternate; }
+
+    @keyframes puddingJump { from{transform:scale(1.10,0.86) rotate(-6deg)} to{transform:scale(0.92,1.14) rotate(2deg)} }
+    @keyframes puddingFall { from{transform:translateY(-1px) rotate(3deg)} to{transform:translateY(1px)  rotate(-3deg)} }
+    @keyframes puddingLand { 0%{transform:scale(1.20,0.82)} 55%{transform:scale(0.96,1.10)} 100%{transform:scale(1,1)} }
+    @keyframes puddingRun  { from{transform:translateY(0px) skewX(-1deg)} to{transform:translateY(-2px) skewX(1deg)} }
+
+    /* ===== ✅ REALISTIC TOPPINGS (CSS 그림) ===== */
+    .topper{
+      position:absolute;
+      left:50%;
+      top:-30px;
+      width: 54px;
+      height: 40px;
+      transform: translateX(-50%);
+      pointer-events:none;
+      filter: drop-shadow(0 6px 10px rgba(0,0,0,0.22));
+      opacity: 0;
+      transition: opacity .12s linear, transform .12s ease;
+      transform-origin: 50% 100%;
+      z-index: 12;
+    }
+    .topper.on{
+      opacity: 1;
+      transform: translateX(-50%) translateY(-2px);
+    }
+
+    /* 딸기 */
+    .strawberry{
+      position:absolute;
+      left:50%; top:6px;
+      width: 22px; height: 26px;
+      transform: translateX(-50%);
+      border-radius: 14px 14px 18px 18px;
+      background:
+        radial-gradient(circle at 30% 25%, rgba(255,255,255,0.35), rgba(255,255,255,0) 45%),
+        linear-gradient(to bottom, #ff566f, #d2162b);
+      box-shadow: inset 0 -3px 0 rgba(0,0,0,0.10);
+      clip-path: polygon(50% 0%, 70% 8%, 86% 24%, 92% 45%, 88% 68%, 74% 86%, 50% 100%, 26% 86%, 12% 68%, 8% 45%, 14% 24%, 30% 8%);
+      opacity:0;
+      transition: opacity .12s linear;
+    }
+    .strawberry::after{
+      /* 씨앗 */
+      content:"";
+      position:absolute; inset:0;
+      background:
+        radial-gradient(circle at 35% 35%, rgba(255,230,160,0.95) 0 1px, transparent 2px),
+        radial-gradient(circle at 60% 42%, rgba(255,230,160,0.95) 0 1px, transparent 2px),
+        radial-gradient(circle at 45% 55%, rgba(255,230,160,0.95) 0 1px, transparent 2px),
+        radial-gradient(circle at 28% 55%, rgba(255,230,160,0.95) 0 1px, transparent 2px),
+        radial-gradient(circle at 62% 62%, rgba(255,230,160,0.95) 0 1px, transparent 2px),
+        radial-gradient(circle at 42% 72%, rgba(255,230,160,0.95) 0 1px, transparent 2px),
+        radial-gradient(circle at 58% 78%, rgba(255,230,160,0.95) 0 1px, transparent 2px);
+      opacity:.9;
+    }
+    .strawberry::before{
+      /* 잎 */
+      content:"";
+      position:absolute;
+      left:50%; top:-8px;
+      width: 26px; height: 14px;
+      transform: translateX(-50%);
+      background:
+        radial-gradient(circle at 30% 70%, #63d95c, #1e8d33 70%);
+      clip-path: polygon(50% 0%, 62% 35%, 100% 45%, 70% 60%, 86% 100%, 50% 72%, 14% 100%, 30% 60%, 0% 45%, 38% 35%);
+      filter: drop-shadow(0 1px 0 rgba(0,0,0,0.15));
+    }
+
+    /* 체리(쌍둥이) */
+    .cherry{
+      position:absolute;
+      left:50%; top:10px;
+      width: 40px; height: 26px;
+      transform: translateX(-50%);
+      opacity:0;
+      transition: opacity .12s linear;
+    }
+    .cherry .c1, .cherry .c2{
+      position:absolute;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 30% 25%, rgba(255,255,255,0.35), rgba(255,255,255,0) 48%),
+        linear-gradient(to bottom, #ff3550, #a80012);
+      box-shadow: inset 0 -2px 0 rgba(0,0,0,0.12);
+    }
+    .cherry .c1{ left:7px; top:8px; }
+    .cherry .c2{ right:7px; top:10px; }
+
+    .cherry .stem{
+      position:absolute;
+      left:50%; top:0px;
+      width: 2px; height: 18px;
+      transform: translateX(-50%) rotate(-12deg);
+      background: linear-gradient(to bottom, #2f7a2f, #145214);
+      border-radius: 999px;
+    }
+    .cherry .stem::before{
+      content:"";
+      position:absolute;
+      left:-10px; top:8px;
+      width: 14px; height: 2px;
+      transform: rotate(-40deg);
+      background: linear-gradient(to right, #2f7a2f, #145214);
+      border-radius: 999px;
+    }
+    .cherry .stem::after{
+      content:"";
+      position:absolute;
+      left:0px; top:8px;
+      width: 14px; height: 2px;
+      transform: rotate(35deg);
+      background: linear-gradient(to right, #2f7a2f, #145214);
+      border-radius: 999px;
+    }
+
+    /* ===== Syrups (드립) ===== */
+    .syrup{
+      position:absolute;
+      left:6px; right:6px;
+      top:-10px;
+      height: 22px;
+      border-radius: 20px 20px 14px 14px;
+      opacity: 0;
+      transition: opacity .12s linear;
+      pointer-events:none;
+      z-index: 11;
+      filter: drop-shadow(0 3px 6px rgba(0,0,0,0.15));
+    }
+    .syrup::after{
+      content:"";
+      position:absolute;
+      left:50%; top:14px;
+      width: 50px; height: 20px;
+      transform: translateX(-50%);
+      background:
+        radial-gradient(circle at 20% 30%, rgba(255,255,255,0.20), rgba(255,255,255,0) 45%),
+        radial-gradient(circle at 82% 35%, rgba(255,255,255,0.18), rgba(255,255,255,0) 46%),
+        radial-gradient(circle at 52% 25%, rgba(255,255,255,0.16), rgba(255,255,255,0) 48%);
+      border-radius: 0 0 18px 18px;
+      opacity:.75;
+    }
+    .syrup-choco{
+      background: linear-gradient(to bottom, rgba(80,35,15,0.85), rgba(80,35,15,0.18));
+      clip-path: polygon(
+        0% 0%, 100% 0%, 100% 60%,
+        86% 60%, 82% 98%, 74% 60%,
+        54% 60%, 50% 100%, 44% 60%,
+        24% 60%, 18% 92%, 12% 60%,
+        0% 60%
+      );
+      box-shadow: inset 0 -2px 0 rgba(0,0,0,0.10);
+    }
+    .syrup-caramel{
+      background: linear-gradient(to bottom, rgba(210,140,60,0.90), rgba(210,140,60,0.20));
+      clip-path: polygon(
+        0% 0%, 100% 0%, 100% 60%,
+        86% 60%, 82% 98%, 74% 60%,
+        54% 60%, 50% 100%, 44% 60%,
+        24% 60%, 18% 92%, 12% 60%,
+        0% 60%
+      );
+      box-shadow: inset 0 -2px 0 rgba(0,0,0,0.08);
+    }
+    .syrup.on{ opacity: 1; }
+
+    /* ===== Platform ===== */
+    .platform { position:absolute; border-radius:10px; will-change:left, top; z-index:10; }
+    .normal { background:#6b3f1d; }
+    .moving { background:#1d5fd6; }
+    .break  { background:#d61d3b; }
+    .boost  { background:#f2c200; }
+
+    /* ===== Laser ===== */
+    .laser{
+      background: linear-gradient(90deg, #ff2b2b, #ff9a9a, #ff2b2b);
+      box-shadow: 0 0 10px rgba(255,0,0,0.7);
+      border: 1px solid rgba(255,255,255,0.35);
+    }
+    .laser::after{
+      content:""; position:absolute; left:-30px; top:50%;
+      width:calc(100% + 60px); height:2px; transform: translateY(-50%);
+      background: rgba(255,60,60,0.95);
+      box-shadow: 0 0 10px rgba(255,60,60,0.95);
+      opacity:1; transition: opacity .12s linear;
+    }
+    .laser.off { box-shadow:none; filter:saturate(0.6); opacity:.55; }
+    .laser.off::after { opacity:0; }
+
+    /* ===== Saw ===== */
+    .saw{
+      position:absolute; border-radius:50%;
+      background: radial-gradient(circle at 35% 35%, #f5f5f5, #a9a9a9 55%, #6a6a6a 100%);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+      animation: spin .75s linear infinite;
+      will-change: transform, left, top;
+      z-index: 12;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ===== Floating Teleporter ===== */
+    .teleporter{
+      position:absolute;
+      border-radius:50%;
+      width: 46px;
+      height: 46px;
+      background: radial-gradient(circle at 35% 35%, #fff, #caa7ff 55%, #7c35ff 100%);
+      box-shadow: 0 6px 18px rgba(120,60,255,0.35);
+      animation: spin 1.0s linear infinite;
+      z-index: 13;
+      will-change: transform, left, top;
+    }
+    .teleporter::before{
+      content:""; position:absolute; inset:-8px; border-radius:50%;
+      background: conic-gradient(
+        from 0deg,
+        rgba(255,255,255,0.8) 0 10deg, transparent 10deg 20deg,
+        rgba(255,255,255,0.8) 20deg 30deg, transparent 30deg 40deg,
+        rgba(255,255,255,0.8) 40deg 50deg, transparent 50deg 60deg,
+        rgba(255,255,255,0.8) 60deg 70deg, transparent 70deg 80deg,
+        rgba(255,255,255,0.8) 80deg 90deg, transparent 90deg 100deg,
+        rgba(255,255,255,0.8) 100deg 110deg, transparent 110deg 120deg,
+        rgba(255,255,255,0.8) 120deg 130deg, transparent 130deg 140deg,
+        rgba(255,255,255,0.8) 140deg 150deg, transparent 150deg 160deg,
+        rgba(255,255,255,0.8) 160deg 170deg, transparent 170deg 180deg,
+        rgba(255,255,255,0.8) 180deg 190deg, transparent 190deg 200deg,
+        rgba(255,255,255,0.8) 200deg 210deg, transparent 210deg 220deg,
+        rgba(255,255,255,0.8) 220deg 230deg, transparent 230deg 240deg,
+        rgba(255,255,255,0.8) 240deg 250deg, transparent 250deg 260deg,
+        rgba(255,255,255,0.8) 260deg 270deg, transparent 270deg 280deg,
+        rgba(255,255,255,0.8) 280deg 290deg, transparent 290deg 300deg,
+        rgba(255,255,255,0.8) 300deg 310deg, transparent 310deg 320deg,
+        rgba(255,255,255,0.8) 320deg 330deg, transparent 330deg 340deg,
+        rgba(255,255,255,0.8) 340deg 350deg, transparent 350deg 360deg
+      );
+      opacity:.9;
+      filter: drop-shadow(0 0 10px rgba(160,90,255,0.5));
+    }
+    .teleporter::after{
+      content:"🌀";
+      position:absolute; left:50%; top:50%;
+      transform: translate(-50%,-50%);
+      font-size: 18px;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.25));
+    }
+
+    /* ===== Wall ===== */
+    .wall{
+      position:absolute; border-radius:10px;
+      background: linear-gradient(#3b3b3b, #1f1f1f);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+      opacity:.92;
+      will-change: left, top;
+      z-index: 11;
+    }
+
+    /* ===== Items ===== */
+    .item{
+      position:absolute; width:34px; height:34px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:22px; border-radius:12px;
+      background: rgba(255,255,255,0.75);
+      border: 1px solid rgba(0,0,0,0.10);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+      backdrop-filter: blur(6px);
+      transform: translate(-50%, -50%);
+      will-change: left, top, transform;
+      animation: bob 1.2s ease-in-out infinite;
+      z-index: 13;
+    }
+    @keyframes bob {
+      0%,100% { transform: translate(-50%, -52%); }
+      50%     { transform: translate(-50%, -46%); }
+    }
+
+    /* ===== HUD ===== */
+    #hud{
+      position: fixed; left: 50%; top: 28px;
+      transform: translateX(-50%);
+      background: rgba(255,255,255,0.55);
+      border: 1px solid rgba(0,0,0,0.08);
+      padding: 14px 18px;
+      border-radius: 18px;
+      backdrop-filter: blur(8px);
+      display:none;
+      z-index: 50;
+      text-align:center;
+      min-width: 220px;
+    }
+    #hud .big{ font-weight: 900; font-size: 40px; letter-spacing: 0.5px; text-shadow: 0 2px 0 rgba(0,0,0,0.10); line-height: 1.1; }
+    #hud .sub{ font-size: 12px; opacity:.82; margin-top: 4px; white-space: nowrap; }
+
+    #rightTop{
+      position: fixed; right: 12px; top: 12px;
+      display:none; flex-direction:column; gap:10px;
+      align-items:flex-end; z-index: 50;
+    }
+    #lives{
+      background: rgba(255,255,255,0.45);
+      border: 1px solid rgba(0,0,0,0.08);
+      padding: 8px 10px;
+      border-radius: 14px;
+      backdrop-filter: blur(6px);
+    }
+    #lives .hearts{ display:flex; gap:6px; align-items:center; font-size: 20px; }
+    #buffs{
+      background: rgba(255,255,255,0.35);
+      border: 1px solid rgba(0,0,0,0.06);
+      padding: 8px 10px;
+      border-radius: 14px;
+      backdrop-filter: blur(6px);
+      font-size: 13px;
+      min-width: 116px;
+      text-align:right;
+    }
+    #buffs .b{ display:flex; gap:8px; align-items:center; justify-content:flex-end; }
+    #buffs .t{ font-weight: 800; }
+
+    /* 🍮 Pudding selector */
+    #puddingBox{
+      background: rgba(255,255,255,0.45);
+      border: 1px solid rgba(0,0,0,0.08);
+      padding: 8px 10px;
+      border-radius: 14px;
+      backdrop-filter: blur(6px);
+      font-size: 13px;
+      display:flex; gap:8px; align-items:center;
+    }
+    #puddingSelect{
+      padding: 6px 8px;
+      border-radius: 12px;
+      border: 1px solid rgba(0,0,0,0.12);
+      background: rgba(255,255,255,0.95);
+      font-weight: 800;
+    }
+
+    #bgBox{
+      background: rgba(255,255,255,0.45);
+      border: 1px solid rgba(0,0,0,0.08);
+      padding: 8px 10px;
+      border-radius: 14px;
+      backdrop-filter: blur(6px);
+      font-size: 13px;
+      display:flex; gap:8px; align-items:center;
+    }
+    #bgSelectGame{
+      padding: 6px 8px;
+      border-radius: 12px;
+      border: 1px solid rgba(0,0,0,0.12);
+      background: rgba(255,255,255,0.95);
+      font-weight: 800;
+    }
+
+    #overlay{
+      position: fixed; inset:0;
+      display:flex; align-items:center; justify-content:center;
+      background: radial-gradient(circle at 50% 20%, rgba(255,255,255,0.35), rgba(0,0,0,0.25));
+      z-index: 100;
+    }
+    #panel{
+      width: min(560px, calc(100% - 40px));
+      background: rgba(255,255,255,0.88);
+      border: 1px solid rgba(0,0,0,0.08);
+      border-radius: 22px;
+      padding: 18px 18px 16px;
+      box-shadow: 0 15px 60px rgba(0,0,0,0.25);
+      backdrop-filter: blur(10px);
+    }
+    #panel h1{ margin: 0 0 8px; font-size: 22px; }
+    #panel p{ margin: 0 0 12px; font-size: 13px; opacity: .9; line-height: 1.45; }
+    .btnRow{ display:flex; gap:10px; flex-wrap:wrap; margin-top: 12px; }
+    button{
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(0,0,0,0.12);
+      background: rgba(255,255,255,0.95);
+      cursor: pointer;
+      font-weight: 700;
+    }
+    button.primary{ background:#111; color:#fff; border-color: rgba(0,0,0,0.2); }
+    .pill{
+      display:inline-flex; gap:8px; align-items:center;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(0,0,0,0.10);
+      background: rgba(255,255,255,0.72);
+      font-size: 13px;
+      margin-top: 8px;
+    }
+    select{
+      padding: 8px 10px; border-radius: 12px;
+      border: 1px solid rgba(0,0,0,0.12);
+      background: rgba(255,255,255,0.95);
+      font-weight: 700;
+    }
+
+    .shake { animation: shake .22s linear; }
+    @keyframes shake {
+      0%{transform:translate(0,0)} 20%{transform:translate(-6px,2px)}
+      40%{transform:translate(5px,-3px)} 60%{transform:translate(-4px,-2px)}
+      80%{transform:translate(4px,3px)} 100%{transform:translate(0,0)}
+    }
+
+    .puff{
+      position:absolute; width:8px; height:8px; border-radius:50%;
+      background: rgba(255,255,255,0.9);
+      pointer-events:none;
+      transform: translate(-50%, -50%);
+      animation: puff .45s ease-out forwards;
+      z-index: 30;
+    }
+    @keyframes puff{
+      from{opacity:.9; transform:translate(-50%,-50%) scale(1)}
+      to{opacity:0; transform:translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(2.2)}
+    }
+
+    #gameover{
+      display:none;
+      position: fixed; top: 38%; width: 100%;
+      text-align:center; font-size: 48px;
+      color: #ff2b2b; font-weight: 900;
+      text-shadow: 0 2px 0 rgba(0,0,0,0.2);
+      letter-spacing: 1px;
+      z-index: 90;
+    }
+
+    .invincible { filter: drop-shadow(0 0 10px rgba(120,220,255,0.95)); }
+    .powered    { filter: drop-shadow(0 0 10px rgba(255,200,60,0.95)); }
+  </style>
+</head>
+
+<body>
+  <div id="bg">
+    <div class="sky"></div>
+    <div class="layer far"></div>
+    <div class="layer mid"></div>
+    <div class="layer near"></div>
+  </div>
+
+  <div id="player">
+    <div class="pudding" id="pudding">
+      <div class="shine"></div>
+      <div class="eyes"></div>
+
+      <!-- ✅ 토핑(딸기/체리) -->
+      <div class="topper" id="topper">
+        <div class="strawberry" id="topStraw"></div>
+        <div class="cherry" id="topCherry">
+          <div class="stem"></div>
+          <div class="c1"></div>
+          <div class="c2"></div>
+        </div>
+      </div>
+
+      <!-- ✅ 시럽(초코/캐러멜) -->
+      <div class="syrup syrup-choco" id="syrupChoco"></div>
+      <div class="syrup syrup-caramel" id="syrupCaramel"></div>
+    </div>
+  </div>
+
+  <div id="hud">
+    <div class="big" id="height">0m</div>
+    <div class="sub">이동: ← → 또는 A D · 점프: Space / W / ↑ · R: 재시작</div>
+  </div>
+
+  <div id="rightTop">
+    <div id="lives"><div class="hearts" id="hearts"></div></div>
+    <div id="buffs"></div>
+
+    <div id="puddingBox">
+      <span style="font-weight:900;">푸딩</span>
+      <select id="puddingSelect"></select>
+    </div>
+
+    <div id="bgBox">
+      <span style="font-weight:900;">배경</span>
+      <select id="bgSelectGame"></select>
+    </div>
+  </div>
+
+  <div id="gameover">GAME OVER</div>
+
+  <div id="overlay">
+    <div id="panel">
+      <h1>🍮 푸딩jump</h1>
+      <p>
+        아이템: ❤️목숨+1(체리) · 🛡️5초 무적(초코시럽/낙사도 포함) · 👟6초 강화(캐러멜시럽/점프·이속) · ✨더블점프(딸기)<br/>
+        텔레포터: 🌀 공중에 떠있는 톱니(닿으면 순간이동)
+      </p>
+
+      <div class="pill">
+        난이도
+        <select id="difficultySelect">
+          <option value="easy">쉬움</option>
+          <option value="normal" selected>보통</option>
+          <option value="hard">어려움</option>
+          <option value="hell">지옥</option>
+        </select>
+      </div>
+
+      <div class="pill">
+        배경
+        <select id="bgSelect"></select>
+      </div>
+
+      <div class="btnRow">
+        <button class="primary" id="startBtn">게임 시작</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===== DOM refs =====
+    const player = document.getElementById("player");
+    const puddingEl = document.getElementById("pudding");
+
+    const overlay = document.getElementById("overlay");
+    const difficultySelect = document.getElementById("difficultySelect");
+    const startBtn = document.getElementById("startBtn");
+
+    const hud = document.getElementById("hud");
+    const heightEl = document.getElementById("height");
+
+    const rightTop = document.getElementById("rightTop");
+    const heartsEl = document.getElementById("hearts");
+    const buffsEl = document.getElementById("buffs");
+
+    const gameoverEl = document.getElementById("gameover");
+
+    const bgSelect = document.getElementById("bgSelect");
+    const bgSelectGame = document.getElementById("bgSelectGame");
+
+    const puddingSelect = document.getElementById("puddingSelect");
+
+    // ✅ topper & syrups
+    const topperEl = document.getElementById("topper");
+    const topStraw = document.getElementById("topStraw");
+    const topCherry = document.getElementById("topCherry");
+    const syrupChocoEl = document.getElementById("syrupChoco");
+    const syrupCaramelEl = document.getElementById("syrupCaramel");
+
+    // ===== Helpers =====
+    let W = window.innerWidth, H = window.innerHeight;
+    function rand(min, max){ return Math.random() * (max-min) + min; }
+    function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
+    function refreshSize(){ W = window.innerWidth; H = window.innerHeight; x = clamp(x, 20, W-20); }
+    window.addEventListener("resize", refreshSize);
+
+    function now(){ return performance.now(); }
+    function shake(){
+      document.body.classList.remove("shake");
+      void document.body.offsetWidth;
+      document.body.classList.add("shake");
+    }
+    function spawnPuff(px, py, count=10){
+      for(let i=0;i<count;i++){
+        const el = document.createElement("div");
+        el.className = "puff";
+        el.style.left = px + "px";
+        el.style.top  = py + "px";
+        el.style.setProperty("--dx", (rand(-22, 22)) + "px");
+        el.style.setProperty("--dy", (rand(-28, -6)) + "px");
+        document.body.appendChild(el);
+        setTimeout(()=> el.remove(), 520);
+      }
+    }
+
+    // ===== 🍮 Pudding Types =====
+    const PUDDING_KEY = "puddingjump_pudding_v1";
+    const PUDDINGS = [
+      { id:"vanilla", name:"바닐라 🍮", light:"#fff2cc", dark:"#f2c94c" },
+      { id:"choco",   name:"초코 🍫",   light:"#c9a07a", dark:"#7a4a2a" },
+      { id:"straw",   name:"딸기 🍓",   light:"#ffd1dc", dark:"#ff6b81" },
+      { id:"matcha",  name:"말차 🍵",   light:"#cde7b0", dark:"#6b8e23" },
+      { id:"taro",    name:"타로 🟣",   light:"#e2d9ff", dark:"#8b6fd6" },
+      { id:"caramel", name:"카라멜 🧁", light:"#ffe0b2", dark:"#d18b47" },
+    ];
+    function applyPudding(id){
+      const p = PUDDINGS.find(v=>v.id===id) || PUDDINGS[0];
+      document.body.style.setProperty("--puddingLight", p.light);
+      document.body.style.setProperty("--puddingDark",  p.dark);
+      localStorage.setItem(PUDDING_KEY, p.id);
+      puddingSelect.value = p.id;
+    }
+    function initPuddingUI(){
+      puddingSelect.innerHTML = "";
+      for(const p of PUDDINGS){
+        const o = document.createElement("option");
+        o.value = p.id;
+        o.textContent = p.name;
+        puddingSelect.appendChild(o);
+      }
+      const saved = localStorage.getItem(PUDDING_KEY) || "vanilla";
+      applyPudding(saved);
+      puddingSelect.addEventListener("change", ()=> applyPudding(puddingSelect.value));
+    }
+    initPuddingUI();
+
+    // ===== ✅ Background Themes =====
+    const BG_KEY = "nemojump_bg_v2";
+    const THEMES = [
+      { id:"sky",    name:"하늘", vars:{ sky1:"#77c8ff", sky2:"#bfe9ff", sky3:"#e7fbff", far1:"#6b86b8", far2:"#425d8c", mid1:"#4b7b55", mid2:"#2f5a3a", near1:"#2f6b3d", near2:"#1f422a", starsOpacity: 0 }},
+      { id:"sunset", name:"노을", vars:{ sky1:"#ff7a59", sky2:"#ffd0a6", sky3:"#fff2df", far1:"#7a6a98", far2:"#4b3f6a", mid1:"#6b7a4b", mid2:"#3f5a2f", near1:"#3a6b3f", near2:"#234226", starsOpacity: 0 }},
+      { id:"night",  name:"밤",   vars:{ sky1:"#071428", sky2:"#0f2a4e", sky3:"#1f4a78", far1:"#3f507a", far2:"#243051", mid1:"#2f4f44", mid2:"#1f3a31", near1:"#1f4a2d", near2:"#14301e", starsOpacity: 0.75 }},
+      { id:"space",  name:"우주", vars:{ sky1:"#180b3a", sky2:"#0b0622", sky3:"#000000", far1:"#5d4aa6", far2:"#2a1a55", mid1:"#2f3c6b", mid2:"#1a2447", near1:"#1f3352", near2:"#0f1a2e", starsOpacity: 0.95 }}
+    ];
+    function setTheme(themeId){
+      const t = THEMES.find(v=>v.id===themeId) || THEMES[0];
+      const v = t.vars;
+      const s = document.body.style;
+      s.setProperty("--sky1", v.sky1); s.setProperty("--sky2", v.sky2); s.setProperty("--sky3", v.sky3);
+      s.setProperty("--far1", v.far1); s.setProperty("--far2", v.far2);
+      s.setProperty("--mid1", v.mid1); s.setProperty("--mid2", v.mid2);
+      s.setProperty("--near1", v.near1); s.setProperty("--near2", v.near2);
+      s.setProperty("--starsOpacity", v.starsOpacity);
+      localStorage.setItem(BG_KEY, t.id);
+      bgSelect.value = t.id; bgSelectGame.value = t.id;
+    }
+    function initThemeUI(){
+      const saved = localStorage.getItem(BG_KEY) || "sky";
+      bgSelect.innerHTML = "";
+      THEMES.forEach(t=>{ const o=document.createElement("option"); o.value=t.id; o.textContent=t.name; bgSelect.appendChild(o); });
+      bgSelectGame.innerHTML = "";
+      THEMES.forEach(t=>{ const o=document.createElement("option"); o.value=t.id; o.textContent=t.name; bgSelectGame.appendChild(o); });
+      bgSelect.addEventListener("change", ()=> setTheme(bgSelect.value));
+      bgSelectGame.addEventListener("change", ()=> setTheme(bgSelectGame.value));
+      setTheme(saved);
+    }
+    initThemeUI();
+
+    // ===== Difficulty =====
+    const DIFFS = {
+      easy:   { label:"쉬움", physics:{ gravity:0.68, move:6.4, jumpN:-16.6, jumpB:-23.2, airControl:1.0 },
+        spawn:{ gapY:68, platW:[130,200], platH:[14,22], movingSpeed:[2.4,4.0],
+          probs:{ moving:0.14, break:0.08, laser:0.06, boost:0.20, teleport:0.06 },
+          unlock:{ laser:160, saw:120, wall:100, teleport:40 },
+          sawChance:0.15, wallChance:0.12, wallW:[14,18], wallH:[90,150], sawR:[16,22],
+          laserPeriod:1300, laserOnRatio:0.50,
+          itemChance:0.30,
+          heartChance:0.26, shieldChance:0.30, shoeChance:0.30, doubleChance:0.14 } },
+      normal: { label:"보통", physics:{ gravity:0.75, move:6.0, jumpN:-16.0, jumpB:-22.0, airControl:1.0 },
+        spawn:{ gapY:78, platW:[100,175], platH:[14,20], movingSpeed:[3.6,5.8],
+          probs:{ moving:0.24, break:0.16, laser:0.12, boost:0.12, teleport:0.07 },
+          unlock:{ laser:100, saw:80, wall:60, teleport:35 },
+          sawChance:0.28, wallChance:0.22, wallW:[16,20], wallH:[110,180], sawR:[18,26],
+          laserPeriod:1100, laserOnRatio:0.55,
+          itemChance:0.26,
+          heartChance:0.22, shieldChance:0.32, shoeChance:0.30, doubleChance:0.16 } },
+      hard:   { label:"어려움", physics:{ gravity:0.82, move:6.3, jumpN:-15.4, jumpB:-21.2, airControl:0.92 },
+        spawn:{ gapY:88, platW:[80,150],  platH:[12,18], movingSpeed:[4.6,7.4],
+          probs:{ moving:0.30, break:0.18, laser:0.18, boost:0.10, teleport:0.08 },
+          unlock:{ laser:80, saw:60, wall:45, teleport:30 },
+          sawChance:0.36, wallChance:0.30, wallW:[16,24], wallH:[120,210], sawR:[20,30],
+          laserPeriod:950,  laserOnRatio:0.60,
+          itemChance:0.23,
+          heartChance:0.16, shieldChance:0.34, shoeChance:0.30, doubleChance:0.20 } },
+      hell:   { label:"지옥", physics:{ gravity:0.90, move:6.6, jumpN:-15.0, jumpB:-20.4, airControl:0.86 },
+        spawn:{ gapY:98, platW:[65,125],  platH:[10,16], movingSpeed:[6.0,9.3],
+          probs:{ moving:0.34, break:0.24, laser:0.22, boost:0.08, teleport:0.10 },
+          unlock:{ laser:55, saw:40, wall:30, teleport:20 },
+          sawChance:0.44, wallChance:0.36, wallW:[18,30], wallH:[140,250], sawR:[22,36],
+          laserPeriod:850,  laserOnRatio:0.64,
+          itemChance:0.22,
+          heartChance:0.12, shieldChance:0.34, shoeChance:0.30, doubleChance:0.24 } }
+    };
+
+    let difficulty = "normal";
+    let CFG = DIFFS[difficulty];
+
+    // ===== Player =====
+    const R = 18;
+    let x = Math.floor(W/2), y = Math.floor(H*0.65);
+    let vy = 0;
+
+    let score = 0;
+    let maxHeight = 0;
+
+    let left=false, right=false;
+    let alive=false;
+    let rafId=null;
+
+    let grounded = false;
+    let groundPlatform = null;
+
+    const JUMP_COOLDOWN_MS = 150;
+    let nextJumpAt = 0;
+
+    let doubleJumps = 0;
+    const MAX_DOUBLEJUMPS = 2;
+
+    let teleUntil = 0;
+
+    const MAX_LIVES = 5;
+    let lives = 1;
+
+    // ✅ 무적 분리
+    let invincibleBuffUntil = 0; // 🛡️ (초코)
+    let invincibleHitUntil  = 0; // 피격 무적(표시X)
+    let shoeUntil = 0;           // 👟 (캐러멜)
+    let cherryUntil = 0;         // ❤️ 체리 2.5초
+
+    function isInvincible(){
+      const t = now();
+      return t < invincibleBuffUntil || t < invincibleHitUntil;
+    }
+    function isShoed(){ return now() < shoeUntil; }
+    function setInvincibleBuff(ms){ invincibleBuffUntil = Math.max(invincibleBuffUntil, now() + ms); }
+    function setInvincibleHit(ms){ invincibleHitUntil = Math.max(invincibleHitUntil, now() + ms); }
+    function setShoe(ms){ shoeUntil = Math.max(shoeUntil, now() + ms); }
+
+    function renderLives(){
+      heartsEl.innerHTML = "";
+      for(let i=0;i<lives;i++){
+        const s = document.createElement("span");
+        s.textContent = "❤️";
+        heartsEl.appendChild(s);
+      }
+      if(lives === 0){
+        const s = document.createElement("span");
+        s.textContent = "💀";
+        heartsEl.appendChild(s);
+      }
+    }
+    function renderBuffs(){
+      const t = now();
+      const parts = [];
+      if(doubleJumps > 0) parts.push(`<div class="b"><span>✨</span><span class="t">${doubleJumps}</span></div>`);
+      if(t < invincibleBuffUntil) parts.push(`<div class="b"><span>🛡️</span><span class="t">${Math.ceil((invincibleBuffUntil - t)/1000)}s</span></div>`);
+      if(t < shoeUntil)           parts.push(`<div class="b"><span>👟</span><span class="t">${Math.ceil((shoeUntil - t)/1000)}s</span></div>`);
+      buffsEl.innerHTML = parts.length ? parts.join("") : `<div class="b" style="opacity:.75">버프 없음</div>`;
+    }
+
+    // ✅ 토핑/시럽 표시 (CSS 그림)
+    function updateToppings(){
+      const t = now();
+
+      // 시럽: 아이템 버프일 때만
+      syrupChocoEl.classList.toggle("on", t < invincibleBuffUntil);
+      syrupCaramelEl.classList.toggle("on", t < shoeUntil);
+
+      // 토핑: 딸기(더블점프 남음) > 체리(하트 먹은 직후)
+      const showStraw = (doubleJumps > 0);
+      const showCherry = (!showStraw && t < cherryUntil);
+
+      topStraw.style.opacity = showStraw ? "1" : "0";
+      topCherry.style.opacity = showCherry ? "1" : "0";
+      topperEl.classList.toggle("on", showStraw || showCherry);
+    }
+
+    // ===== Input =====
+    function isJumpKey(code){
+      return code === "Space" || code === "ArrowUp" || code === "KeyW";
+    }
+    document.addEventListener("keydown",(e)=>{
+      if(e.code==="ArrowLeft"||e.code==="KeyA") left=true;
+      if(e.code==="ArrowRight"||e.code==="KeyD") right=true;
+
+      if(isJumpKey(e.code)){
+        e.preventDefault();
+        tryJump();
+      }
+
+      if(e.code==="KeyR" && !alive){
+        overlay.style.display = "none";
+        hud.style.display = "block";
+        rightTop.style.display = "flex";
+        resetGame(); loop();
+      }
+    });
+    document.addEventListener("keyup",(e)=>{
+      if(e.code==="ArrowLeft"||e.code==="KeyA") left=false;
+      if(e.code==="ArrowRight"||e.code==="KeyD") right=false;
+    });
+
+    // ===== World Objects =====
+    const platforms=[], saws=[], walls=[], items=[], teleporters=[];
+    const PLAT_PER_LAYER_MIN=2, PLAT_PER_LAYER_MAX=3;
+    function removeAt(arr,i){ arr[i].el.remove(); arr.splice(i,1); }
+
+    function pickType(){
+      const s = CFG.spawn;
+      const laserEnabled = score >= s.unlock.laser;
+      const r = Math.random();
+      let acc = 0;
+
+      if(laserEnabled){
+        acc += s.probs.laser;
+        if(r < acc) return "laser";
+      }
+      acc += s.probs.boost;  if(r < acc) return "boost";
+      acc += s.probs.break;  if(r < acc) return "break";
+      acc += s.probs.moving; if(r < acc) return "moving";
+      return "normal";
+    }
+
+    function createPlatform(px, py, type){
+      const s = CFG.spawn;
+      const w = Math.floor(rand(s.platW[0], s.platW[1]));
+      const h = Math.floor(rand(s.platH[0], s.platH[1]));
+
+      const el = document.createElement("div");
+      el.className = "platform " + type;
+      el.style.left = px + "px";
+      el.style.top  = py + "px";
+      el.style.width = w + "px";
+      el.style.height= h + "px";
+      document.body.appendChild(el);
+
+      const obj = { el, x:px, y:py, w, h, type, vx:0, breakUsed:false, phase: Math.floor(rand(0, s.laserPeriod)) };
+      if(type==="moving"){
+        obj.vx = (Math.random()<0.5?-1:1)*rand(s.movingSpeed[0], s.movingSpeed[1]);
+      }
+      platforms.push(obj);
+      return obj;
+    }
+
+    function createSaw(px, py){
+      const s = CFG.spawn;
+      const r = Math.floor(rand(s.sawR[0], s.sawR[1]));
+      const d = r*2;
+
+      const el = document.createElement("div");
+      el.className = "saw";
+      el.style.left = px + "px";
+      el.style.top  = py + "px";
+      el.style.width = d + "px";
+      el.style.height= d + "px";
+      document.body.appendChild(el);
+
+      const obj = { el, x:px, y:py, r };
+      saws.push(obj);
+      return obj;
+    }
+
+    function createTeleporter(px, py){
+      const el = document.createElement("div");
+      el.className = "teleporter";
+      el.style.left = px + "px";
+      el.style.top  = py + "px";
+      document.body.appendChild(el);
+
+      const obj = { el, x:px, y:py, r: 26 };
+      teleporters.push(obj);
+      return obj;
+    }
+
+    function createWall(px, py){
+      const s = CFG.spawn;
+      const w = Math.floor(rand(s.wallW[0], s.wallW[1]));
+      const h = Math.floor(rand(s.wallH[0], s.wallH[1]));
+
+      const el = document.createElement("div");
+      el.className = "wall";
+      el.style.left = px + "px";
+      el.style.top  = py + "px";
+      el.style.width = w + "px";
+      el.style.height= h + "px";
+      document.body.appendChild(el);
+
+      const obj = { el, x:px, y:py, w, h };
+      walls.push(obj);
+      return obj;
+    }
+
+    function createItem(px, py, kind){
+      const el = document.createElement("div");
+      el.className = "item " + kind;
+      el.textContent =
+        (kind==="heart")  ? "❤️" :
+        (kind==="shield") ? "🛡️" :
+        (kind==="shoe")   ? "👟" : "✨";
+      el.style.left = px + "px";
+      el.style.top  = py + "px";
+      document.body.appendChild(el);
+
+      const obj = { el, x:px, y:py, r: 18, type: kind };
+      items.push(obj);
+      return obj;
+    }
+
+    // ===== Item spawn control =====
+    const MAX_ITEMS_ON_SCREEN = 3;
+    const ITEM_LAYER_COOLDOWN = 2;
+    let itemCooldownLayers = 0;
+
+    function maybeSpawnItem(layerY, centerHintX){
+      const s = CFG.spawn;
+      if(items.length >= MAX_ITEMS_ON_SCREEN) return;
+      if(itemCooldownLayers > 0) { itemCooldownLayers--; return; }
+      if(Math.random() > s.itemChance) return;
+
+      const r = Math.random();
+      const a = s.heartChance;
+      const b = a + s.shieldChance;
+      const c = b + s.shoeChance;
+      let kind = "double";
+      if(r < a) kind = "heart";
+      else if(r < b) kind = "shield";
+      else if(r < c) kind = "shoe";
+
+      if(kind === "heart" && lives >= 3 && Math.random() < 0.75) {
+        kind = (Math.random() < 0.55) ? "shield" : "shoe";
+      }
+      if(kind === "double" && doubleJumps >= 2 && Math.random() < 0.85){
+        kind = (Math.random() < 0.5) ? "shoe" : "shield";
+      }
+
+      const ix = clamp(centerHintX + rand(-170, 170), 30, W - 30);
+      const iy = layerY + Math.floor(s.gapY * 0.35);
+      createItem(ix, iy, kind);
+      itemCooldownLayers = ITEM_LAYER_COOLDOWN;
+    }
+
+    function createLayer(layerY, centerHintX, forceNormal=false){
+      const s = CFG.spawn;
+      const count = Math.floor(rand(PLAT_PER_LAYER_MIN, PLAT_PER_LAYER_MAX+1));
+
+      const approxW = Math.floor((s.platW[0] + s.platW[1]) / 2);
+      const xs = [];
+      for(let i=0;i<count;i++){
+        xs.push(clamp(centerHintX + rand(-220, 220), 0, W-approxW));
+      }
+      xs.sort((a,b)=>a-b);
+      for(let i=1;i<xs.length;i++){
+        if(xs[i]-xs[i-1] < 70) xs[i] = clamp(xs[i-1] + 70, 0, W-approxW);
+      }
+
+      let laserCount = 0;
+      for(let i=0;i<xs.length;i++){
+        let type = forceNormal ? "normal" : pickType();
+        if(type==="laser"){
+          laserCount++;
+          if(laserCount>1) type="normal";
+        }
+        createPlatform(xs[i], layerY, type);
+      }
+
+      if(!forceNormal){
+        if(score >= s.unlock.saw && Math.random() < s.sawChance){
+          const sx = clamp(centerHintX + rand(-190, 190), 10, W-90);
+          const sy = layerY + Math.floor(s.gapY/2) - 20;
+          createSaw(sx, sy);
+        }
+        if(score >= s.unlock.wall && Math.random() < s.wallChance){
+          const wx = clamp(centerHintX + rand(-220, 220), 10, W-45);
+          const wy = layerY - Math.floor(rand(30, 80));
+          createWall(wx, wy);
+        }
+        if(score >= s.unlock.teleport && Math.random() < s.probs.teleport){
+          const tx = clamp(centerHintX + rand(-200, 200), 40, W - 86);
+          const ty = layerY + Math.floor(s.gapY * 0.35) - 30;
+          createTeleporter(tx, ty);
+        }
+        maybeSpawnItem(layerY, centerHintX);
+      }
+
+      return xs[Math.floor(xs.length/2)];
+    }
+
+    function topMostPlatform(){
+      let best=null;
+      for(const p of platforms) if(!best || p.y < best.y) best=p;
+      return best;
+    }
+
+    // ===== Laser blink =====
+    function isLaserOn(p, t){
+      const s = CFG.spawn;
+      const tt = (t + p.phase) % s.laserPeriod;
+      return tt < s.laserPeriod * s.laserOnRatio;
+    }
+    function updateLaserVisuals(){
+      const t = now();
+      for(const p of platforms){
+        if(p.type!=="laser") continue;
+        const on = isLaserOn(p, t);
+        if(on) p.el.classList.remove("off");
+        else p.el.classList.add("off");
+      }
+    }
+
+    // ===== Pickup =====
+    function checkItemPickup(){
+      for(let i=items.length-1;i>=0;i--){
+        const it = items[i];
+        const dx = x - it.x;
+        const dy = y - it.y;
+        const rr = (R + it.r);
+        if(dx*dx + dy*dy <= rr*rr){
+          if(it.type === "heart"){
+            lives = Math.min(MAX_LIVES, lives + 1);
+            cherryUntil = now() + 2500;      // ✅ 체리 2.5초
+            spawnPuff(it.x, it.y, 14);
+          } else if(it.type === "shield"){
+            setInvincibleBuff(5000);         // ✅ 초코시럽 5초
+            spawnPuff(it.x, it.y, 14);
+          } else if(it.type === "shoe"){
+            setShoe(6000);                   // ✅ 캐러멜시럽 6초
+            spawnPuff(it.x, it.y, 14);
+          } else {
+            doubleJumps = Math.min(MAX_DOUBLEJUMPS, doubleJumps + 1); // ✅ 딸기(남는 동안)
+            spawnPuff(it.x, it.y, 14);
+          }
+          removeAt(items, i);
+          renderLives();
+          updateToppings();
+          return;
+        }
+      }
+    }
+
+    // ===== Teleporter touch =====
+    function checkTeleporterTouch(){
+      if(now() < teleUntil) return;
+
+      for(let i=teleporters.length-1;i>=0;i--){
+        const tp = teleporters[i];
+        const cx = tp.x + tp.r;
+        const cy = tp.y + tp.r;
+
+        const dx = x - cx;
+        const dy = y - cy;
+        const rr = (R + tp.r - 4);
+
+        if(dx*dx + dy*dy <= rr*rr){
+          teleUntil = now() + 900;
+          spawnPuff(cx, cy, 18);
+
+          const targetY = tp.y - rand(CFG.spawn.gapY*3.0, CFG.spawn.gapY*5.0);
+          x = clamp(cx + rand(-120, 120), 20, W-20);
+          y = Math.max(120, targetY);
+          vy = -6;
+          grounded = false;
+          groundPlatform = null;
+
+          removeAt(teleporters, i);
+
+          player.classList.add("jumping");
+          setTimeout(()=> player.classList.remove("jumping"), 240);
+          return;
+        }
+      }
+    }
+
+    // ===== Movement / Jump helpers =====
+    function getMoveSpeed(){ const base = CFG.physics.move; return isShoed() ? base * 1.22 : base; }
+    function getJumpNormal(){ const base = CFG.physics.jumpN; return isShoed() ? base * 1.14 : base; }
+    function getJumpBoost(){ const base = CFG.physics.jumpB; return isShoed() ? base * 1.10 : base; }
+
+    // ===== Jump + Double Jump =====
+    function tryJump(){
+      if(!alive) return;
+      const t = now();
+      if(t < nextJumpAt) return;
+
+      if(grounded){
+        if(groundPlatform && groundPlatform.type === "laser" && isLaserOn(groundPlatform, t) && !isInvincible()){
+          tryDie(); return;
+        }
+        const jumpV = (groundPlatform && groundPlatform.type === "boost") ? getJumpBoost() : getJumpNormal();
+        vy = jumpV;
+        grounded = false;
+        groundPlatform = null;
+
+        nextJumpAt = t + JUMP_COOLDOWN_MS;
+
+        player.classList.add("jumping");
+        setTimeout(()=> player.classList.remove("jumping"), 240);
+        return;
+      }
+
+      if(doubleJumps > 0){
+        doubleJumps -= 1;
+        vy = getJumpNormal() * 0.92;
+        nextJumpAt = t + (JUMP_COOLDOWN_MS + 30);
+
+        spawnPuff(x, y, 10);
+        player.classList.add("jumping");
+        setTimeout(()=> player.classList.remove("jumping"), 240);
+        updateToppings();
+      }
+    }
+
+    // ===== Death =====
+    function tryDie(){
+      if(isInvincible()) return;
+
+      if(lives > 0){
+        lives -= 1;
+        renderLives();
+
+        shake();
+        setInvincibleHit(1500); // ✅ 피격 무적(초코시럽 X)
+        vy = -10;
+        grounded = false;
+        groundPlatform = null;
+        spawnPuff(x, y, 18);
+        return;
+      }
+      die();
+    }
+
+    function die(){
+      if(!alive) return;
+      alive = false;
+
+      shake();
+      gameoverEl.style.display = "block";
+
+      if(rafId) cancelAnimationFrame(rafId);
+      rafId = null;
+
+      setTimeout(() => { location.reload(); }, 600);
+    }
+
+    // ===== Collisions (Landing) =====
+    function checkLanding(){
+      const footY = y + R;
+      const prevFootY = (y - vy) + R;
+      const t = now();
+
+      for(const p of platforms){
+        const withinX = (x + R) > p.x && (x - R) < (p.x + p.w);
+        const crossingTop = prevFootY <= p.y && footY >= p.y;
+
+        if(withinX && crossingTop && vy > 0){
+          if(p.type==="laser" && isLaserOn(p, t) && !isInvincible()){
+            tryDie(); return;
+          }
+
+          y = p.y - R;
+          vy = 0;
+          grounded = true;
+          groundPlatform = p;
+
+          player.classList.add("landed");
+          setTimeout(()=> player.classList.remove("landed"), 140);
+
+          if(p.type==="break" && !p.breakUsed){
+            p.breakUsed = true;
+            p.el.style.opacity="0.35";
+            setTimeout(()=>{
+              const idx = platforms.indexOf(p);
+              if(idx!==-1){
+                if(groundPlatform === p){
+                  grounded = false;
+                  groundPlatform = null;
+                }
+                removeAt(platforms, idx);
+              }
+            }, 220);
+          }
+
+          score += 5;
+          return;
+        }
+      }
+
+      if(grounded && groundPlatform){
+        const p = groundPlatform;
+        const stillWithinX = (x + R) > p.x && (x - R) < (p.x + p.w);
+        const stillOnTop = Math.abs((y + R) - p.y) < 0.9;
+        if(!stillWithinX || !stillOnTop){
+          grounded = false;
+          groundPlatform = null;
+        }
+      }
+    }
+
+    function checkLaserTouchDeath(){
+      if(isInvincible()) return;
+      const t = now();
+      for(const p of platforms){
+        if(p.type!=="laser") continue;
+        if(!isLaserOn(p, t)) continue;
+        const overlapX = (x + R) > (p.x - 10) && (x - R) < (p.x + p.w + 10);
+        const overlapY = (y + R) > (p.y - 12) && (y - R) < (p.y + p.h + 6);
+        if(overlapX && overlapY){ tryDie(); return; }
+      }
+    }
+
+    function checkSawDeath(){
+      if(isInvincible()) return;
+      for(const s of saws){
+        const cx = s.x + s.r, cy = s.y + s.r;
+        const dx = x - cx, dy = y - cy;
+        const rr = (R + s.r - 4);
+        if(dx*dx + dy*dy <= rr*rr){ tryDie(); return; }
+      }
+    }
+
+    function resolveWallBlock(){
+      for(const w of walls){
+        const rx=w.x, ry=w.y, rw=w.w, rh=w.h;
+        const closestX = clamp(x, rx, rx+rw);
+        const closestY = clamp(y, ry, ry+rh);
+        const dx = x - closestX, dy = y - closestY;
+        if(dx*dx + dy*dy <= R*R){
+          if(x < rx + rw/2) x = rx - R - 0.5;
+          else x = rx + rw + R + 0.5;
+          x = clamp(x, 20, W-20);
+        }
+      }
+    }
+
+    // ===== Moving platforms =====
+    function updateMovingPlatforms(){
+      for(const p of platforms){
+        if(p.type!=="moving") continue;
+        const prevX = p.x;
+        p.x += p.vx;
+        if(p.x <= 0){ p.x=0; p.vx*=-1; }
+        if(p.x >= W - p.w){ p.x = W - p.w; p.vx*=-1; }
+        p.el.style.left = p.x + "px";
+        if(grounded && groundPlatform === p){
+          x += (p.x - prevX);
+          x = clamp(x, 20, W-20);
+        }
+      }
+    }
+
+    // ===== Parallax =====
+    function updateParallax(){
+      const t = now() * 0.00008;
+      const farY  = -maxHeight * 0.020;
+      const midY  = -maxHeight * 0.040;
+      const nearY = -maxHeight * 0.060;
+
+      const farX  = Math.sin(t) * 18;
+      const midX  = Math.sin(t * 1.25) * 28;
+      const nearX = Math.sin(t * 1.5) * 36;
+
+      const bg = document.getElementById("bg");
+      if(!bg) return;
+      const far  = bg.querySelector(".far");
+      const mid  = bg.querySelector(".mid");
+      const near = bg.querySelector(".near");
+
+      if(far)  far.style.transform  = `translate(${farX}px, ${farY}px)`;
+      if(mid)  mid.style.transform  = `translate(${midX}px, ${midY}px)`;
+      if(near) near.style.transform = `translate(${nearX}px, ${nearY}px)`;
+    }
+
+    function handleCameraScroll(){
+      const cameraLine = 220;
+      if(y < cameraLine){
+        const diff = cameraLine - y;
+        y = cameraLine;
+
+        for(const p of platforms){ p.y += diff; p.el.style.top = p.y + "px"; }
+        for(const s of saws){ s.y += diff; s.el.style.top = s.y + "px"; }
+        for(const w of walls){ w.y += diff; w.el.style.top = w.y + "px"; }
+        for(const it of items){ it.y += diff; it.el.style.top = it.y + "px"; }
+        for(const tp of teleporters){ tp.y += diff; tp.el.style.top = tp.y + "px"; }
+
+        score += Math.floor(diff);
+        maxHeight += Math.floor(diff);
+      }
+    }
+
+    function recycleAll(){
+      for(let i=platforms.length-1;i>=0;i--) if(platforms[i].y > H+120) removeAt(platforms,i);
+      for(let i=saws.length-1;i>=0;i--) if(saws[i].y > H+180) removeAt(saws,i);
+      for(let i=walls.length-1;i>=0;i--) if(walls[i].y > H+260) removeAt(walls,i);
+      for(let i=items.length-1;i>=0;i--) if(items[i].y > H+220) removeAt(items,i);
+      for(let i=teleporters.length-1;i>=0;i--) if(teleporters[i].y > H+220) removeAt(teleporters,i);
+    }
+
+    function spawnMoreIfNeeded(){
+      const s = CFG.spawn;
+      while(platforms.length < 46){
+        const top = topMostPlatform();
+        const baseY = top ? top.y : 0;
+        const newY = baseY - s.gapY;
+        const hintX = top ? top.x : Math.floor(W/2);
+        createLayer(newY, hintX, false);
+      }
+    }
+
+    function updateHUD(){
+      heightEl.textContent = (maxHeight/10 | 0) + "m";
+      renderBuffs();
+      updateToppings();
+    }
+
+    function checkFall(){
+      if(y > H + 140){
+        if(isInvincible()){
+          y = H * 0.65;
+          vy = -12;
+          grounded = false;
+          groundPlatform = null;
+          spawnPuff(x, y, 16);
+          return;
+        }
+        tryDie();
+        y = H * 0.65;
+        vy = 0;
+      }
+    }
+
+    function updatePlayer(){
+      const ph = CFG.physics;
+      const control = (vy < 2 ? 1.0 : ph.airControl);
+      const move = getMoveSpeed();
+      const movingLR = left || right;
+      player.classList.toggle("running", grounded && movingLR);
+
+      if(left)  x -= move * control;
+      if(right) x += move * control;
+      x = clamp(x, 20, W-20);
+
+      if(!grounded){
+        vy += ph.gravity;
+        y  += vy;
+      }
+
+      checkLanding();
+      updateLaserVisuals();
+      checkLaserTouchDeath();
+      checkSawDeath();
+      checkItemPickup();
+      checkTeleporterTouch();
+
+      handleCameraScroll();
+      resolveWallBlock();
+
+      player.style.left = x + "px";
+      player.style.top  = y + "px";
+
+      player.classList.toggle("falling", !grounded && vy > 2);
+      player.classList.toggle("invincible", isInvincible());
+      player.classList.toggle("powered", isShoed());
+    }
+
+    function resetGame(){
+      if(rafId) cancelAnimationFrame(rafId);
+      rafId=null;
+
+      for(const p of platforms) p.el.remove();
+      for(const s of saws) s.el.remove();
+      for(const w of walls) w.el.remove();
+      for(const it of items) it.el.remove();
+      for(const tp of teleporters) tp.el.remove();
+
+      platforms.length=0; saws.length=0; walls.length=0; items.length=0; teleporters.length=0;
+
+      refreshSize();
+
+      x = Math.floor(W/2);
+      y = Math.floor(H*0.65);
+      vy = 0;
+
+      score = 0;
+      maxHeight = 0;
+
+      alive = true;
+      gameoverEl.style.display="none";
+
+      lives = 1;
+      invincibleBuffUntil = 0;
+      invincibleHitUntil  = 0;
+      shoeUntil = 0;
+      cherryUntil = 0;
+      itemCooldownLayers = 0;
+
+      grounded = false;
+      groundPlatform = null;
+
+      doubleJumps = 0;
+      nextJumpAt = 0;
+      teleUntil = 0;
+
+      renderLives();
+      renderBuffs();
+      updateToppings();
+      updateParallax();
+
+      const startW = 190;
+      const startH = 18;
+      const startX = clamp(x - startW/2, 0, W-startW);
+      const startY = Math.floor(y + 60);
+
+      const el = document.createElement("div");
+      el.className = "platform normal";
+      el.style.left = startX+"px";
+      el.style.top = startY+"px";
+      el.style.width = startW+"px";
+      el.style.height = startH+"px";
+      document.body.appendChild(el);
+
+      const startP = { el, x:startX, y:startY, w:startW, h:startH, type:"normal", vx:0, breakUsed:false, phase:0 };
+      platforms.push(startP);
+
+      y = startY - R;
+      vy = 0;
+      grounded = true;
+      groundPlatform = startP;
+
+      let hintX = startX;
+      let layerY = startY - 95;
+      hintX = createLayer(layerY, hintX, true);
+
+      layerY -= CFG.spawn.gapY;
+      for(let i=0;i<16;i++){
+        hintX = createLayer(layerY, hintX, false);
+        layerY -= CFG.spawn.gapY;
+      }
+
+      updateHUD();
+    }
+
+    function loop(){
+      if(!alive) return;
+
+      updateMovingPlatforms();
+      updatePlayer();
+
+      recycleAll();
+      spawnMoreIfNeeded();
+
+      updateHUD();
+      checkFall();
+      updateParallax();
+
+      rafId = requestAnimationFrame(loop);
+    }
+
+    // ===== Start =====
+    startBtn.addEventListener("click", () => {
+      difficulty = difficultySelect.value;
+      CFG = DIFFS[difficulty];
+      setTheme(bgSelect.value);
+
+      overlay.style.display = "none";
+      hud.style.display = "block";
+      rightTop.style.display = "flex";
+
+      applyPudding(localStorage.getItem(PUDDING_KEY) || "vanilla");
+
+      resetGame();
+      loop();
+    });
+  </script>
+</body>
+</html>
