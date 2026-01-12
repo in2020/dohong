@@ -1,1202 +1,1205 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-  <title>진우 1945 - 필사기 슈팅</title>
-  <style>
-    :root{
-      --bg1:#77c8ff; --bg2:#bfe9ff; --bg3:#e7fbff;
-      --ui: rgba(0,0,0,.45);
-      --ui2: rgba(255,255,255,.18);
-      --text:#fff;
-      --good:#7CFFB2;
-      --warn:#FFD166;
-      --bad:#FF6B6B;
-    }
-    html,body{ height:100%; margin:0; overflow:hidden; background:linear-gradient(var(--bg1),var(--bg2) 55%,var(--bg3)); font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
-    #wrap{ position:fixed; inset:0; touch-action:none; }
-    canvas{ position:absolute; inset:0; width:100%; height:100%; display:block; }
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+    <title>진우 1945 - 필사기 슈팅</title>
+    <style>
+        :root{
+            --bg1:#77c8ff; --bg2:#bfe9ff; --bg3:#e7fbff;
+            --ui: rgba(0,0,0,.45);
+            --ui2: rgba(255,255,255,.18);
+            --text:#fff;
+            --good:#7CFFB2;
+            --warn:#FFD166;
+            --bad:#FF6B6B;
+        }
+        html,body{ height:100%; margin:0; overflow:hidden; background:linear-gradient(var(--bg1),var(--bg2) 55%,var(--bg3)); font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
+        #wrap{ position:fixed; inset:0; touch-action:none; }
+        canvas{ position:absolute; inset:0; width:100%; height:100%; display:block; }
 
-    /* HUD */
-    .hud{
-      position:fixed; left:0; top:0; right:0;
-      display:flex; justify-content:space-between; align-items:flex-start;
-      padding: env(safe-area-inset-top) 12px 0 12px;
-      pointer-events:none;
-    }
-    .panel{
-      margin-top:10px;
-      padding:10px 12px;
-      background: var(--ui);
-      border:1px solid rgba(255,255,255,.18);
-      border-radius:14px;
-      color:var(--text);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      box-shadow: 0 10px 25px rgba(0,0,0,.15);
-      pointer-events:none;
-    }
-    .timeRow{ font-weight:800; letter-spacing:.2px; font-size:14px; opacity:.95; }
-    .subRow{ margin-top:6px; font-size:12px; opacity:.9; display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
-    .pill{ padding:4px 8px; border-radius:999px; background:var(--ui2); border:1px solid rgba(255,255,255,.14); }
+        /* HUD */
+        .hud{
+            position:fixed; left:0; top:0; right:0;
+            display:flex; justify-content:space-between; align-items:flex-start;
+            padding: env(safe-area-inset-top) 12px 0 12px;
+            pointer-events:none;
+        }
+        .panel{
+            margin-top:10px;
+            padding:10px 12px;
+            background: var(--ui);
+            border:1px solid rgba(255,255,255,.18);
+            border-radius:14px;
+            color:var(--text);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 10px 25px rgba(0,0,0,.15);
+            pointer-events:none;
+        }
+        .timeRow{ font-weight:800; letter-spacing:.2px; font-size:14px; opacity:.95; }
+        .subRow{ margin-top:6px; font-size:12px; opacity:.9; display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+        .pill{ padding:4px 8px; border-radius:999px; background:var(--ui2); border:1px solid rgba(255,255,255,.14); }
 
-    .energyBox{ min-width: 190px; }
-    .barWrap{ margin-top:8px; height:12px; background: rgba(255,255,255,.18); border-radius:999px; overflow:hidden; border:1px solid rgba(255,255,255,.15);}
-    .bar{ height:100%; width:50%; background: linear-gradient(90deg, var(--good), #4cc9f0); border-radius:999px; }
-    .bar.bad{ background: linear-gradient(90deg, var(--bad), #ff9f1c); }
-    .bar.warn{ background: linear-gradient(90deg, var(--warn), #f7d794); }
+        .energyBox{ min-width: 190px; }
+        .barWrap{ margin-top:8px; height:12px; background: rgba(255,255,255,.18); border-radius:999px; overflow:hidden; border:1px solid rgba(255,255,255,.15);}
+        .bar{ height:100%; width:50%; background: linear-gradient(90deg, var(--good), #4cc9f0); border-radius:999px; }
+        .bar.bad{ background: linear-gradient(90deg, var(--bad), #ff9f1c); }
+        .bar.warn{ background: linear-gradient(90deg, var(--warn), #f7d794); }
 
-    /* Controls */
-    .controls{
-      position:fixed; left:0; right:0; bottom:0;
-      padding: 12px;
-      padding-bottom: calc(12px + env(safe-area-inset-bottom));
-      display:flex; justify-content:space-between; gap:12px;
-      pointer-events:none;
-    }
-    .btn{
-      pointer-events:auto;
-      user-select:none;
-      -webkit-user-select:none;
-      border: 1px solid rgba(255,255,255,.20);
-      background: rgba(0,0,0,.45);
-      color:#fff;
-      border-radius: 18px;
-      padding: 12px 14px;
-      min-width: 120px;
-      display:flex; align-items:center; justify-content:center;
-      gap:10px;
-      font-weight: 800;
-      box-shadow: 0 10px 25px rgba(0,0,0,.18);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-    }
-    .btn:active{ transform: translateY(1px) scale(.99); }
-    .btn small{ font-weight:700; opacity:.85; }
-    .btn .dot{ width:10px; height:10px; border-radius:999px; background: var(--warn); box-shadow: 0 0 0 3px rgba(255,209,102,.18); }
+        /* Controls */
+        .controls{
+            position:fixed; left:0; right:0; bottom:0;
+            padding: 12px;
+            padding-bottom: calc(12px + env(safe-area-inset-bottom));
+            display:flex; justify-content:space-between; gap:12px;
+            pointer-events:none;
+        }
+        .btn{
+            pointer-events:auto;
+            user-select:none;
+            -webkit-user-select:none;
+            border: 1px solid rgba(255,255,255,.20);
+            background: rgba(0,0,0,.45);
+            color:#fff;
+            border-radius: 18px;
+            padding: 12px 14px;
+            min-width: 120px;
+            display:flex; align-items:center; justify-content:center;
+            gap:10px;
+            font-weight: 800;
+            box-shadow: 0 10px 25px rgba(0,0,0,.18);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        .btn:active{ transform: translateY(1px) scale(.99); }
+        .btn small{ font-weight:700; opacity:.85; }
+        .btn .dot{ width:10px; height:10px; border-radius:999px; background: var(--warn); box-shadow: 0 0 0 3px rgba(255,209,102,.18); }
 
-    /* Toast / overlays */
-    .centerToast{
-      position:fixed; inset:0;
-      display:flex; align-items:center; justify-content:center;
-      pointer-events:none;
-    }
-    .toast{
-      padding: 14px 18px;
-      border-radius: 18px;
-      background: rgba(0,0,0,.55);
-      border: 1px solid rgba(255,255,255,.22);
-      color:#fff;
-      font-weight: 900;
-      text-align:center;
-      transform: translateY(0);
-      opacity:0;
-      filter: drop-shadow(0 10px 30px rgba(0,0,0,.22));
-      max-width: min(560px, 86vw);
-      line-height: 1.2;
-    }
-    .toast.show{ animation: pop 1.25s ease forwards; }
-    @keyframes pop{
-      0%{ opacity:0; transform: translateY(18px) scale(.96); }
-      15%{ opacity:1; transform: translateY(0) scale(1.02); }
-      45%{ opacity:1; transform: translateY(0) scale(1); }
-      100%{ opacity:0; transform: translateY(-10px) scale(.98); }
-    }
+        /* Toast / overlays */
+        .centerToast{
+            position:fixed; inset:0;
+            display:flex; align-items:center; justify-content:center;
+            pointer-events:none;
+        }
+        .toast{
+            padding: 14px 18px;
+            border-radius: 18px;
+            background: rgba(0,0,0,.55);
+            border: 1px solid rgba(255,255,255,.22);
+            color:#fff;
+            font-weight: 900;
+            text-align:center;
+            transform: translateY(0);
+            opacity:0;
+            filter: drop-shadow(0 10px 30px rgba(0,0,0,.22));
+            max-width: min(560px, 86vw);
+            line-height: 1.2;
+        }
+        .toast.show{ animation: pop 1.25s ease forwards; }
+        @keyframes pop{
+            0%{ opacity:0; transform: translateY(18px) scale(.96); }
+            15%{ opacity:1; transform: translateY(0) scale(1.02); }
+            45%{ opacity:1; transform: translateY(0) scale(1); }
+            100%{ opacity:0; transform: translateY(-10px) scale(.98); }
+        }
 
-    .bigOverlay{
-      position:fixed; inset:0;
-      display:flex; align-items:center; justify-content:center;
-      pointer-events:none;
-      opacity:0;
-    }
-    .bigOverlay.show{ animation: overlay 1.8s ease forwards; }
-    @keyframes overlay{
-      0%{ opacity:0; transform:scale(.98); }
-      12%{ opacity:1; transform:scale(1); }
-      70%{ opacity:1; }
-      100%{ opacity:0; transform:scale(1.02); }
-    }
-    .bigText{
-      font-weight: 1000;
-      letter-spacing:-.6px;
-      font-size: clamp(28px, 7vw, 68px);
-      color:#fff;
-      text-shadow:
-        0 10px 40px rgba(0,0,0,.35),
-        0 0 22px rgba(255,255,255,.18);
-      padding: 18px 22px;
-      border-radius: 26px;
-      background: radial-gradient(circle at 30% 20%, rgba(255,255,255,.18), transparent 55%),
-                  rgba(0,0,0,.30);
-      border: 1px solid rgba(255,255,255,.24);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      text-align:center;
-      max-width: min(760px, 92vw);
-    }
-    .subText{
-      margin-top: 10px;
-      font-size: clamp(12px, 2.3vw, 16px);
-      opacity:.92;
-      font-weight: 800;
-    }
+        .bigOverlay{
+            position:fixed; inset:0;
+            display:flex; align-items:center; justify-content:center;
+            pointer-events:none;
+            opacity:0;
+        }
+        .bigOverlay.show{ animation: overlay 1.8s ease forwards; }
+        @keyframes overlay{
+            0%{ opacity:0; transform:scale(.98); }
+            12%{ opacity:1; transform:scale(1); }
+            70%{ opacity:1; }
+            100%{ opacity:0; transform:scale(1.02); }
+        }
+        .bigText{
+            font-weight: 1000;
+            letter-spacing:-.6px;
+            font-size: clamp(28px, 7vw, 68px);
+            color:#fff;
+            text-shadow:
+                    0 10px 40px rgba(0,0,0,.35),
+                    0 0 22px rgba(255,255,255,.18);
+            padding: 18px 22px;
+            border-radius: 26px;
+            background: radial-gradient(circle at 30% 20%, rgba(255,255,255,.18), transparent 55%),
+            rgba(0,0,0,.30);
+            border: 1px solid rgba(255,255,255,.24);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            text-align:center;
+            max-width: min(760px, 92vw);
+        }
+        .subText{
+            margin-top: 10px;
+            font-size: clamp(12px, 2.3vw, 16px);
+            opacity:.92;
+            font-weight: 800;
+        }
 
-    .screen{
-      position:fixed; inset:0;
-      display:flex; align-items:center; justify-content:center;
-      background: radial-gradient(circle at 50% 20%, rgba(255,255,255,.15), transparent 55%),
-                  linear-gradient(rgba(0,0,0,.25), rgba(0,0,0,.55));
-      z-index: 20;
-      color:#fff;
-    }
-    .card{
-      width: min(560px, 92vw);
-      padding: 18px 18px 16px;
-      border-radius: 26px;
-      border: 1px solid rgba(255,255,255,.22);
-      background: rgba(0,0,0,.45);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      box-shadow: 0 20px 60px rgba(0,0,0,.25);
-    }
-    .title{
-      font-weight: 1000;
-      font-size: 26px;
-      letter-spacing:-.6px;
-    }
-    .desc{
-      margin-top: 10px;
-      opacity:.92;
-      line-height: 1.45;
-      font-size: 14px;
-    }
-    .row{
-      display:flex; gap:12px; flex-wrap:wrap;
-      margin-top: 14px;
-      justify-content:flex-start;
-    }
-    .pill2{
-      padding: 8px 10px;
-      border-radius: 14px;
-      background: rgba(255,255,255,.12);
-      border: 1px solid rgba(255,255,255,.18);
-      font-weight: 800;
-      font-size: 13px;
-    }
-    .primary{
-      margin-top: 14px;
-      width:100%;
-      padding: 12px 14px;
-      border-radius: 18px;
-      border: 1px solid rgba(255,255,255,.22);
-      background: rgba(255,255,255,.14);
-      color:#fff;
-      font-weight: 1000;
-      cursor:pointer;
-    }
-    .primary:active{ transform: translateY(1px) scale(.99); }
-    .smallNote{ margin-top: 10px; opacity:.8; font-size: 12px; }
-  </style>
+        .screen{
+            position:fixed; inset:0;
+            display:flex; align-items:center; justify-content:center;
+            background: radial-gradient(circle at 50% 20%, rgba(255,255,255,.15), transparent 55%),
+            linear-gradient(rgba(0,0,0,.25), rgba(0,0,0,.55));
+            z-index: 20;
+            color:#fff;
+        }
+        .card{
+            width: min(560px, 92vw);
+            padding: 18px 18px 16px;
+            border-radius: 26px;
+            border: 1px solid rgba(255,255,255,.22);
+            background: rgba(0,0,0,.45);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 20px 60px rgba(0,0,0,.25);
+        }
+        .title{
+            font-weight: 1000;
+            font-size: 26px;
+            letter-spacing:-.6px;
+        }
+        .desc{
+            margin-top: 10px;
+            opacity:.92;
+            line-height: 1.45;
+            font-size: 14px;
+        }
+        .row{
+            display:flex; gap:12px; flex-wrap:wrap;
+            margin-top: 14px;
+            justify-content:flex-start;
+        }
+        .pill2{
+            padding: 8px 10px;
+            border-radius: 14px;
+            background: rgba(255,255,255,.12);
+            border: 1px solid rgba(255,255,255,.18);
+            font-weight: 800;
+            font-size: 13px;
+        }
+        .primary{
+            margin-top: 14px;
+            width:100%;
+            padding: 12px 14px;
+            border-radius: 18px;
+            border: 1px solid rgba(255,255,255,.22);
+            background: rgba(255,255,255,.14);
+            color:#fff;
+            font-weight: 1000;
+            cursor:pointer;
+        }
+        .primary:active{ transform: translateY(1px) scale(.99); }
+        .smallNote{ margin-top: 10px; opacity:.8; font-size: 12px; }
+    </style>
 </head>
 <body>
-  <div id="wrap">
+<div id="wrap">
     <canvas id="c"></canvas>
-  </div>
+</div>
 
-  <div class="hud" aria-hidden="true">
+<div class="hud" aria-hidden="true">
     <div class="panel">
-      <div class="timeRow">⏱️ 시간 <span id="timeTxt">00:00</span></div>
-      <div class="subRow">
-        <span class="pill">⚔️ 칼 발사 자동</span>
-        <span class="pill">💥 필사기 <b id="bombTxt">0</b></span>
-      </div>
+        <div class="timeRow">⏱️ 시간 <span id="timeTxt">00:00</span></div>
+        <div class="subRow">
+            <span class="pill">⚔️ 칼 발사 자동</span>
+            <span class="pill">💥 필사기 <b id="bombTxt">0</b></span>
+        </div>
     </div>
 
     <div class="panel energyBox">
-      <div class="timeRow" style="display:flex; justify-content:space-between; gap:12px;">
-        <span>🔋 에너지</span><b id="hpTxt">100</b>
-      </div>
-      <div class="barWrap" title="플레이어 에너지">
-        <div id="hpBar" class="bar"></div>
-      </div>
-      <div class="subRow" style="margin-top:10px;">
-        <span class="pill">👑 보스 <b id="bossName">-</b></span>
-        <span class="pill">❤️ <b id="bossHpTxt">-</b></span>
-      </div>
-      <div class="barWrap" title="보스 에너지">
-        <div id="bossBar" class="bar"></div>
-      </div>
+        <div class="timeRow" style="display:flex; justify-content:space-between; gap:12px;">
+            <span>🔋 에너지</span><b id="hpTxt">100</b>
+        </div>
+        <div class="barWrap" title="플레이어 에너지">
+            <div id="hpBar" class="bar"></div>
+        </div>
+        <div class="subRow" style="margin-top:10px;">
+            <span class="pill">👑 보스 <b id="bossName">-</b></span>
+            <span class="pill">❤️ <b id="bossHpTxt">-</b></span>
+        </div>
+        <div class="barWrap" title="보스 에너지">
+            <div id="bossBar" class="bar"></div>
+        </div>
     </div>
-  </div>
+</div>
 
-  <div class="controls" aria-hidden="true">
+<div class="controls" aria-hidden="true">
     <button id="bombBtn" class="btn" type="button">
-      <span class="dot"></span>
-      필사기 사용 <small>(폭발)</small>
+        <span class="dot"></span>
+        필사기 사용 <small>(폭발)</small>
     </button>
     <button id="pauseBtn" class="btn" type="button">
-      ⏸️ 일시정지
+        ⏸️ 일시정지
     </button>
-  </div>
+</div>
 
-  <div class="centerToast" aria-hidden="true">
+<div class="centerToast" aria-hidden="true">
     <div id="toast" class="toast"></div>
-  </div>
+</div>
 
-  <div id="bigOverlay" class="bigOverlay" aria-hidden="true">
+<div id="bigOverlay" class="bigOverlay" aria-hidden="true">
     <div class="bigText">
-      <div id="bigTitle">보스 출현!</div>
-      <div id="bigSub" class="subText"></div>
+        <div id="bigTitle">보스 출현!</div>
+        <div id="bigSub" class="subText"></div>
     </div>
-  </div>
+</div>
 
-  <div id="startScreen" class="screen">
+<div id="startScreen" class="screen">
     <div class="card">
-      <div class="title">🗡️ 진우 1945</div>
-      <div class="desc">
-        나혼자레벨업 느낌의 “성진우”가 하늘을 날며 <b>칼</b>을 던지는 1945 스타일 슈팅 게임!<br/>
-        <b>필사기</b>를 쓰면 화면의 모든 적/미사일이 폭발합니다. (아이템 먹어야 생김)
-      </div>
-      <div class="row">
-        <div class="pill2">📱 터치/드래그로 이동</div>
-        <div class="pill2">🖱️ 마우스 드래그 지원</div>
-        <div class="pill2">💊 힐링포션(에너지 회복)</div>
-      </div>
-      <button id="startBtn" class="primary" type="button">게임 시작</button>
-      <div class="smallNote">팁: 필사기는 <b>보스</b>도 폭발시켜요. 아껴 쓸지, 바로 쓸지 선택!</div>
+        <div class="title">🗡️ 진우 1945</div>
+        <div class="desc">
+            나혼자레벨업 느낌의 “성진우”가 하늘을 날며 <b>칼</b>을 던지는 1945 스타일 슈팅 게임!<br/>
+            <b>필사기</b>를 쓰면 화면의 모든 적/미사일이 폭발합니다. (아이템 먹어야 생김)
+        </div>
+        <div class="row">
+            <div class="pill2">📱 터치/드래그로 이동</div>
+            <div class="pill2">🖱️ 마우스 드래그 지원</div>
+            <div class="pill2">💊 힐링포션(에너지 회복)</div>
+        </div>
+        <button id="startBtn" class="primary" type="button">게임 시작</button>
+        <div class="smallNote">팁: 필사기는 <b>보스</b>도 폭발시켜요. 아껴 쓸지, 바로 쓸지 선택!</div>
     </div>
-  </div>
+</div>
 
-  <div id="endScreen" class="screen" style="display:none;">
+<div id="endScreen" class="screen" style="display:none;">
     <div class="card">
-      <div id="endTitle" class="title">끝!</div>
-      <div id="endDesc" class="desc"></div>
-      <button id="restartBtn" class="primary" type="button">다시 시작</button>
-      <div class="smallNote">F5도 가능하지만, 모바일은 버튼이 편해요.</div>
+        <div id="endTitle" class="title">끝!</div>
+        <div id="endDesc" class="desc"></div>
+        <button id="restartBtn" class="primary" type="button">다시 시작</button>
+        <div class="smallNote">F5도 가능하지만, 모바일은 버튼이 편해요.</div>
     </div>
-  </div>
+</div>
 
 <script>
-(() => {
-  const canvas = document.getElementById('c');
-  const ctx = canvas.getContext('2d');
+    (() => {
+        const canvas = document.getElementById('c');
+        const ctx = canvas.getContext('2d');
 
-  // HUD elements
-  const timeTxt = document.getElementById('timeTxt');
-  const bombTxt = document.getElementById('bombTxt');
-  const hpTxt = document.getElementById('hpTxt');
-  const hpBar = document.getElementById('hpBar');
-  const bossNameEl = document.getElementById('bossName');
-  const bossHpTxt = document.getElementById('bossHpTxt');
-  const bossBar = document.getElementById('bossBar');
-  const toastEl = document.getElementById('toast');
-  const bigOverlay = document.getElementById('bigOverlay');
-  const bigTitle = document.getElementById('bigTitle');
-  const bigSub = document.getElementById('bigSub');
+        // HUD elements
+        const timeTxt = document.getElementById('timeTxt');
+        const bombTxt = document.getElementById('bombTxt');
+        const hpTxt = document.getElementById('hpTxt');
+        const hpBar = document.getElementById('hpBar');
+        const bossNameEl = document.getElementById('bossName');
+        const bossHpTxt = document.getElementById('bossHpTxt');
+        const bossBar = document.getElementById('bossBar');
+        const toastEl = document.getElementById('toast');
+        const bigOverlay = document.getElementById('bigOverlay');
+        const bigTitle = document.getElementById('bigTitle');
+        const bigSub = document.getElementById('bigSub');
 
-  const startScreen = document.getElementById('startScreen');
-  const endScreen = document.getElementById('endScreen');
-  const startBtn = document.getElementById('startBtn');
-  const restartBtn = document.getElementById('restartBtn');
-  const endTitle = document.getElementById('endTitle');
-  const endDesc = document.getElementById('endDesc');
+        const startScreen = document.getElementById('startScreen');
+        const endScreen = document.getElementById('endScreen');
+        const startBtn = document.getElementById('startBtn');
+        const restartBtn = document.getElementById('restartBtn');
+        const endTitle = document.getElementById('endTitle');
+        const endDesc = document.getElementById('endDesc');
 
-  const bombBtn = document.getElementById('bombBtn');
-  const pauseBtn = document.getElementById('pauseBtn');
+        const bombBtn = document.getElementById('bombBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
 
-  // ---- Utilities
-  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-  const rand = (a, b) => a + Math.random() * (b - a);
-  const randi = (a, b) => Math.floor(rand(a, b+1));
-  const now = () => performance.now();
+        // ---- Utilities
+        const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+        const rand = (a, b) => a + Math.random() * (b - a);
+        const randi = (a, b) => Math.floor(rand(a, b+1));
+        const now = () => performance.now();
 
-  // ---- Resize
-  let W=0,H=0,DPR=1;
-  function resize(){
-    const rect = canvas.getBoundingClientRect();
-    DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
-    W = Math.max(320, Math.floor(rect.width));
-    H = Math.max(480, Math.floor(rect.height));
-    canvas.width  = Math.floor(W * DPR);
-    canvas.height = Math.floor(H * DPR);
-    ctx.setTransform(DPR,0,0,DPR,0,0);
-  }
-  window.addEventListener('resize', resize, {passive:true});
+        // ---- Resize
+        let W=0,H=0,DPR=1;
+        function resize(){
+            const rect = canvas.getBoundingClientRect();
+            DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+            W = Math.max(320, Math.floor(rect.width));
+            H = Math.max(480, Math.floor(rect.height));
+            canvas.width  = Math.floor(W * DPR);
+            canvas.height = Math.floor(H * DPR);
+            ctx.setTransform(DPR,0,0,DPR,0,0);
+        }
+        window.addEventListener('resize', resize, {passive:true});
 
-  // ---- Game state
-  const STATE = { READY:0, RUN:1, PAUSE:2, END:3 };
-  let state = STATE.READY;
+        // ---- Game state
+        const STATE = { READY:0, RUN:1, PAUSE:2, END:3 };
+        let state = STATE.READY;
 
-  const world = {
-    t: 0, // elapsed seconds
-    lastTime: 0,
-    scroll: 0,
-    shake: 0,
-    stage: 0, // 0..3
-    nextItemAt: 10,
-    over: false,
-    victory: false
-  };
+        const world = {
+            t: 0, // elapsed seconds
+            lastTime: 0,
+            scroll: 0,
+            shake: 0,
+            stage: 0, // 0..3
+            nextItemAt: 10,
+            over: false,
+            victory: false
+        };
 
-  const player = {
-    x: 0, y: 0,
-    r: 18,
-    hp: 100, hpMax: 100,
-    speed: 520,
-    bombs: 0,
-    fireCd: 0,
-    inv: 0
-  };
+        const player = {
+            x: 0, y: 0,
+            r: 18,
+            hp: 100, hpMax: 100,
+            speed: 520,
+            bombs: 0,
+            fireCd: 0,
+            inv: 0
+        };
 
-  const bullets = [];
-  const enemies = [];
-  const ebullets = [];
-  const particles = [];
-  const items = [];
-  let boss = null;
+        const bullets = [];
+        const enemies = [];
+        const ebullets = [];
+        const particles = [];
+        const items = [];
+        let boss = null;
 
-  // ---- Input (drag / touch)
-  let dragging = false;
-  let target = { x: 0, y: 0 };
-  function toCanvasXY(ev){
-    const rect = canvas.getBoundingClientRect();
-    return { x: (ev.clientX - rect.left), y: (ev.clientY - rect.top) };
-  }
-  function onDown(ev){
-    if(state !== STATE.RUN) return;
-    dragging = true;
-    const p = toCanvasXY(ev);
-    target.x = p.x; target.y = p.y;
-  }
-  function onMove(ev){
-    if(!dragging || state !== STATE.RUN) return;
-    const p = toCanvasXY(ev);
-    target.x = p.x; target.y = p.y;
-  }
-  function onUp(){ dragging = false; }
+        // ---- Input (drag / touch)
+        let dragging = false;
+        let target = { x: 0, y: 0 };
+        function toCanvasXY(ev){
+            const rect = canvas.getBoundingClientRect();
+            return { x: (ev.clientX - rect.left), y: (ev.clientY - rect.top) };
+        }
+        function onDown(ev){
+            if(state !== STATE.RUN) return;
+            dragging = true;
+            const p = toCanvasXY(ev);
+            target.x = p.x; target.y = p.y;
+        }
+        function onMove(ev){
+            if(!dragging || state !== STATE.RUN) return;
+            const p = toCanvasXY(ev);
+            target.x = p.x; target.y = p.y;
+        }
+        function onUp(){ dragging = false; }
 
-  canvas.addEventListener('pointerdown', (e)=>{ canvas.setPointerCapture(e.pointerId); onDown(e); }, {passive:true});
-  canvas.addEventListener('pointermove', onMove, {passive:true});
-  canvas.addEventListener('pointerup', onUp, {passive:true});
-  canvas.addEventListener('pointercancel', onUp, {passive:true});
+        canvas.addEventListener('pointerdown', (e)=>{ canvas.setPointerCapture(e.pointerId); onDown(e); }, {passive:true});
+        canvas.addEventListener('pointermove', onMove, {passive:true});
+        canvas.addEventListener('pointerup', onUp, {passive:true});
+        canvas.addEventListener('pointercancel', onUp, {passive:true});
 
-  // ---- UI helpers
-  function toast(msg){
-    toastEl.textContent = msg;
-    toastEl.classList.remove('show');
-    void toastEl.offsetWidth;
-    toastEl.classList.add('show');
-  }
-  function bigBanner(title, sub){
-    bigTitle.textContent = title;
-    bigSub.textContent = sub || '';
-    bigOverlay.classList.remove('show');
-    void bigOverlay.offsetWidth;
-    bigOverlay.classList.add('show');
-  }
+        // ---- UI helpers
+        function toast(msg){
+            toastEl.textContent = msg;
+            toastEl.classList.remove('show');
+            void toastEl.offsetWidth;
+            toastEl.classList.add('show');
+        }
+        function bigBanner(title, sub){
+            bigTitle.textContent = title;
+            bigSub.textContent = sub || '';
+            bigOverlay.classList.remove('show');
+            void bigOverlay.offsetWidth;
+            bigOverlay.classList.add('show');
+        }
 
-  // ---- Cute drawing primitives
-  function drawShadowBlob(x,y,r,alpha=0.18){
-    ctx.save();
-    ctx.globalAlpha = alpha;
-    ctx.beginPath();
-    ctx.ellipse(x, y, r*1.2, r*0.55, 0, 0, Math.PI*2);
-    ctx.fillStyle = 'rgba(0,0,0,1)';
-    ctx.fill();
-    ctx.restore();
-  }
+        // ---- Cute drawing primitives
+        function drawShadowBlob(x,y,r,alpha=0.18){
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            ctx.beginPath();
+            ctx.ellipse(x, y, r*1.2, r*0.55, 0, 0, Math.PI*2);
+            ctx.fillStyle = 'rgba(0,0,0,1)';
+            ctx.fill();
+            ctx.restore();
+        }
 
-  function drawJinwoo(x,y,scale=1){
-    ctx.save();
-    ctx.translate(x,y);
-    ctx.scale(scale, scale);
+        function drawJinwoo(x,y,scale=1){
+            ctx.save();
+            ctx.translate(x,y);
+            ctx.scale(scale, scale);
 
-    drawShadowBlob(0, 20, 16, 0.10);
+            drawShadowBlob(0, 20, 16, 0.10);
 
-    ctx.beginPath();
-    ctx.moveTo(-16, 10);
-    ctx.quadraticCurveTo(0, 28, 16, 10);
-    ctx.quadraticCurveTo(0, 18, -16, 10);
-    ctx.fillStyle = 'rgba(20, 25, 45, .95)';
-    ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(-16, 10);
+            ctx.quadraticCurveTo(0, 28, 16, 10);
+            ctx.quadraticCurveTo(0, 18, -16, 10);
+            ctx.fillStyle = 'rgba(20, 25, 45, .95)';
+            ctx.fill();
 
-    ctx.beginPath();
-    ctx.roundRect(-10, -2, 20, 18, 8);
-    ctx.fillStyle = 'rgba(35, 40, 70, .95)';
-    ctx.fill();
+            ctx.beginPath();
+            ctx.roundRect(-10, -2, 20, 18, 8);
+            ctx.fillStyle = 'rgba(35, 40, 70, .95)';
+            ctx.fill();
 
-    ctx.beginPath();
-    ctx.arc(0, -10, 12, 0, Math.PI*2);
-    ctx.fillStyle = 'rgba(255, 236, 214, 0.98)';
-    ctx.fill();
+            ctx.beginPath();
+            ctx.arc(0, -10, 12, 0, Math.PI*2);
+            ctx.fillStyle = 'rgba(255, 236, 214, 0.98)';
+            ctx.fill();
 
-    ctx.beginPath();
-    ctx.arc(-2, -13, 12, Math.PI*1.05, Math.PI*1.95);
-    ctx.lineTo(8, -8);
-    ctx.closePath();
-    ctx.fillStyle = 'rgba(25, 25, 35, .98)';
-    ctx.fill();
+            ctx.beginPath();
+            ctx.arc(-2, -13, 12, Math.PI*1.05, Math.PI*1.95);
+            ctx.lineTo(8, -8);
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(25, 25, 35, .98)';
+            ctx.fill();
 
-    ctx.fillStyle = 'rgba(20,20,30,.92)';
-    ctx.beginPath(); ctx.arc(-4, -10, 1.6, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(4, -10, 1.6, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = 'rgba(20,20,30,.92)';
+            ctx.beginPath(); ctx.arc(-4, -10, 1.6, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(4, -10, 1.6, 0, Math.PI*2); ctx.fill();
 
-    ctx.fillStyle = 'rgba(255,255,255,.8)';
-    ctx.beginPath(); ctx.arc(-4.6, -10.6, 0.7, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(3.4, -10.6, 0.7, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = 'rgba(255,255,255,.8)';
+            ctx.beginPath(); ctx.arc(-4.6, -10.6, 0.7, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(3.4, -10.6, 0.7, 0, Math.PI*2); ctx.fill();
 
-    ctx.globalAlpha = 0.9;
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = 'rgba(124,255,178,.9)';
-    ctx.beginPath();
-    ctx.moveTo(-18, 2); ctx.lineTo(-28, -10);
-    ctx.moveTo(18, 2);  ctx.lineTo(28, -10);
-    ctx.stroke();
+            ctx.globalAlpha = 0.9;
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = 'rgba(124,255,178,.9)';
+            ctx.beginPath();
+            ctx.moveTo(-18, 2); ctx.lineTo(-28, -10);
+            ctx.moveTo(18, 2);  ctx.lineTo(28, -10);
+            ctx.stroke();
 
-    ctx.restore();
-  }
+            ctx.restore();
+        }
 
-  function drawEnemy(x,y,r,kind=0){
-    ctx.save();
-    ctx.translate(x,y);
+        function drawEnemy(x,y,r,kind=0){
+            ctx.save();
+            ctx.translate(x,y);
 
-    ctx.beginPath();
-    ctx.arc(0, 0, r, 0, Math.PI*2);
-    ctx.fillStyle = kind===0 ? 'rgba(255, 180, 193, .95)' : 'rgba(200, 220, 255, .95)';
-    ctx.fill();
+            ctx.beginPath();
+            ctx.arc(0, 0, r, 0, Math.PI*2);
+            ctx.fillStyle = kind===0 ? 'rgba(255, 180, 193, .95)' : 'rgba(200, 220, 255, .95)';
+            ctx.fill();
 
-    ctx.beginPath();
-    ctx.moveTo(-r*0.6, -r*0.2);
-    ctx.lineTo(-r*0.2, -r*0.95);
-    ctx.lineTo(0, -r*0.25);
-    ctx.lineTo(r*0.2, -r*0.95);
-    ctx.lineTo(r*0.6, -r*0.2);
-    ctx.closePath();
-    ctx.fillStyle = 'rgba(60, 60, 80, .25)';
-    ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(-r*0.6, -r*0.2);
+            ctx.lineTo(-r*0.2, -r*0.95);
+            ctx.lineTo(0, -r*0.25);
+            ctx.lineTo(r*0.2, -r*0.95);
+            ctx.lineTo(r*0.6, -r*0.2);
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(60, 60, 80, .25)';
+            ctx.fill();
 
-    ctx.fillStyle = 'rgba(20,20,30,.92)';
-    ctx.beginPath(); ctx.arc(-r*0.28, -r*0.05, r*0.12, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(r*0.28, -r*0.05, r*0.12, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = 'rgba(20,20,30,.92)';
+            ctx.beginPath(); ctx.arc(-r*0.28, -r*0.05, r*0.12, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(r*0.28, -r*0.05, r*0.12, 0, Math.PI*2); ctx.fill();
 
-    ctx.strokeStyle = 'rgba(20,20,30,.5)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(0, r*0.18, r*0.18, 0, Math.PI);
-    ctx.stroke();
+            ctx.strokeStyle = 'rgba(20,20,30,.5)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(0, r*0.18, r*0.18, 0, Math.PI);
+            ctx.stroke();
 
-    ctx.restore();
-  }
+            ctx.restore();
+        }
 
-  function drawBoss(b){
-    ctx.save();
-    ctx.translate(b.x, b.y);
-    const bob = Math.sin(world.t*2.1) * 2;
-    ctx.translate(0, bob);
+        function drawBoss(b){
+            ctx.save();
+            ctx.translate(b.x, b.y);
+            const bob = Math.sin(world.t*2.1) * 2;
+            ctx.translate(0, bob);
 
-    drawShadowBlob(0, b.r*0.95, b.r*0.9, 0.14);
+            drawShadowBlob(0, b.r*0.95, b.r*0.9, 0.14);
 
-    ctx.beginPath();
-    ctx.arc(0, 0, b.r, 0, Math.PI*2);
-    ctx.fillStyle = b.theme.body;
-    ctx.fill();
+            ctx.beginPath();
+            ctx.arc(0, 0, b.r, 0, Math.PI*2);
+            ctx.fillStyle = b.theme.body;
+            ctx.fill();
 
-    ctx.beginPath();
-    ctx.roundRect(-b.r*0.75, -b.r*0.2, b.r*1.5, b.r*0.9, b.r*0.35);
-    ctx.fillStyle = b.theme.armor;
-    ctx.fill();
+            ctx.beginPath();
+            ctx.roundRect(-b.r*0.75, -b.r*0.2, b.r*1.5, b.r*0.9, b.r*0.35);
+            ctx.fillStyle = b.theme.armor;
+            ctx.fill();
 
-    ctx.fillStyle = b.theme.face;
-    ctx.beginPath();
-    ctx.arc(-b.r*0.25, -b.r*0.15, b.r*0.12, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath();
-    ctx.arc(b.r*0.25, -b.r*0.15, b.r*0.12, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = b.theme.face;
+            ctx.beginPath();
+            ctx.arc(-b.r*0.25, -b.r*0.15, b.r*0.12, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath();
+            ctx.arc(b.r*0.25, -b.r*0.15, b.r*0.12, 0, Math.PI*2); ctx.fill();
 
-    ctx.fillStyle = 'rgba(255,255,255,.75)';
-    ctx.beginPath(); ctx.arc(-b.r*0.30, -b.r*0.20, b.r*0.05, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(b.r*0.20, -b.r*0.20, b.r*0.05, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = 'rgba(255,255,255,.75)';
+            ctx.beginPath(); ctx.arc(-b.r*0.30, -b.r*0.20, b.r*0.05, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(b.r*0.20, -b.r*0.20, b.r*0.05, 0, Math.PI*2); ctx.fill();
 
-    ctx.globalAlpha = 0.9;
-    ctx.strokeStyle = b.theme.emblem;
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(-b.r*0.35, b.r*0.1);
-    ctx.lineTo(0, b.r*0.35);
-    ctx.lineTo(b.r*0.35, b.r*0.1);
-    ctx.stroke();
+            ctx.globalAlpha = 0.9;
+            ctx.strokeStyle = b.theme.emblem;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(-b.r*0.35, b.r*0.1);
+            ctx.lineTo(0, b.r*0.35);
+            ctx.lineTo(b.r*0.35, b.r*0.1);
+            ctx.stroke();
 
-    ctx.restore();
-  }
+            ctx.restore();
+        }
 
-  function drawItem(it){
-    ctx.save();
-    ctx.translate(it.x, it.y);
-    const f = Math.sin((world.t*3) + it.seed) * 3;
-    ctx.translate(0, f);
+        function drawItem(it){
+            ctx.save();
+            ctx.translate(it.x, it.y);
+            const f = Math.sin((world.t*3) + it.seed) * 3;
+            ctx.translate(0, f);
 
-    ctx.beginPath();
-    ctx.arc(0, 0, it.r, 0, Math.PI*2);
-    ctx.fillStyle = 'rgba(255,255,255,.85)';
-    ctx.fill();
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = 'rgba(0,0,0,.25)';
-    ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(0, 0, it.r, 0, Math.PI*2);
+            ctx.fillStyle = 'rgba(255,255,255,.85)';
+            ctx.fill();
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = 'rgba(0,0,0,.25)';
+            ctx.stroke();
 
-    if(it.type === 'potion'){
-      ctx.beginPath();
-      ctx.roundRect(-it.r*0.35, -it.r*0.25, it.r*0.7, it.r*0.95, it.r*0.25);
-      ctx.fillStyle = 'rgba(76, 201, 240, .85)';
-      ctx.fill();
-      ctx.beginPath();
-      ctx.roundRect(-it.r*0.18, -it.r*0.58, it.r*0.36, it.r*0.25, it.r*0.12);
-      ctx.fillStyle = 'rgba(255,255,255,.8)';
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(255,255,255,.95)';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(0, -it.r*0.05); ctx.lineTo(0, it.r*0.25);
-      ctx.moveTo(-it.r*0.15, it.r*0.10); ctx.lineTo(it.r*0.15, it.r*0.10);
-      ctx.stroke();
-    } else {
-      ctx.beginPath();
-      ctx.roundRect(-it.r*0.45, -it.r*0.18, it.r*0.9, it.r*0.62, it.r*0.22);
-      ctx.fillStyle = 'rgba(255, 209, 102, .92)';
-      ctx.fill();
+            if(it.type === 'potion'){
+                ctx.beginPath();
+                ctx.roundRect(-it.r*0.35, -it.r*0.25, it.r*0.7, it.r*0.95, it.r*0.25);
+                ctx.fillStyle = 'rgba(76, 201, 240, .85)';
+                ctx.fill();
+                ctx.beginPath();
+                ctx.roundRect(-it.r*0.18, -it.r*0.58, it.r*0.36, it.r*0.25, it.r*0.12);
+                ctx.fillStyle = 'rgba(255,255,255,.8)';
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(255,255,255,.95)';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(0, -it.r*0.05); ctx.lineTo(0, it.r*0.25);
+                ctx.moveTo(-it.r*0.15, it.r*0.10); ctx.lineTo(it.r*0.15, it.r*0.10);
+                ctx.stroke();
+            } else {
+                ctx.beginPath();
+                ctx.roundRect(-it.r*0.45, -it.r*0.18, it.r*0.9, it.r*0.62, it.r*0.22);
+                ctx.fillStyle = 'rgba(255, 209, 102, .92)';
+                ctx.fill();
 
-      ctx.strokeStyle = 'rgba(0,0,0,.22)';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(-it.r*0.28, -it.r*0.02); ctx.lineTo(it.r*0.28, -it.r*0.02);
-      ctx.moveTo(-it.r*0.28, it.r*0.16);  ctx.lineTo(it.r*0.28, it.r*0.16);
-      ctx.stroke();
+                ctx.strokeStyle = 'rgba(0,0,0,.22)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(-it.r*0.28, -it.r*0.02); ctx.lineTo(it.r*0.28, -it.r*0.02);
+                ctx.moveTo(-it.r*0.28, it.r*0.16);  ctx.lineTo(it.r*0.28, it.r*0.16);
+                ctx.stroke();
 
-      ctx.fillStyle = 'rgba(0,0,0,.55)';
-      ctx.font = `900 ${Math.max(10, it.r*0.5)}px system-ui`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('필', 0, -it.r*0.02);
-    }
-    ctx.restore();
-  }
+                ctx.fillStyle = 'rgba(0,0,0,.55)';
+                ctx.font = `900 ${Math.max(10, it.r*0.5)}px system-ui`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('필', 0, -it.r*0.02);
+            }
+            ctx.restore();
+        }
 
-  // ---- Particles / explosions
-  function explode(x,y, power=1){
-    const n = Math.floor(18 * power);
-    for(let i=0;i<n;i++){
-      particles.push({
-        x, y,
-        vx: rand(-1,1) * rand(120, 520) * power,
-        vy: rand(-1,1) * rand(120, 520) * power,
-        r: rand(1.5, 4.5) * power,
-        life: rand(0.25, 0.55) * (1 + 0.35*power),
-        hue: randi(160, 210)
-      });
-    }
-  }
-  function screenShake(strength=1){
-    world.shake = Math.max(world.shake, 10 * strength);
-  }
+        // ---- Particles / explosions
+        function explode(x,y, power=1){
+            const n = Math.floor(18 * power);
+            for(let i=0;i<n;i++){
+                particles.push({
+                    x, y,
+                    vx: rand(-1,1) * rand(120, 520) * power,
+                    vy: rand(-1,1) * rand(120, 520) * power,
+                    r: rand(1.5, 4.5) * power,
+                    life: rand(0.25, 0.55) * (1 + 0.35*power),
+                    hue: randi(160, 210)
+                });
+            }
+        }
+        function screenShake(strength=1){
+            world.shake = Math.max(world.shake, 10 * strength);
+        }
 
-  // ---- Spawners
-  function spawnEnemy(){
-    const r = rand(12, 18);
-    enemies.push({
-      x: rand(r, W - r),
-      y: -r - 10,
-      r,
-      hp: 12,
-      vy: rand(120, 210) + world.t*0.3,
-      kind: Math.random() < 0.5 ? 0 : 1,
-      shootCd: rand(0.6, 1.4)
-    });
-  }
+        // ---- Spawners
+        function spawnEnemy(){
+            const r = rand(12, 18);
+            enemies.push({
+                x: rand(r, W - r),
+                y: -r - 10,
+                r,
+                hp: 12,
+                vy: rand(120, 210) + world.t*0.3,
+                kind: Math.random() < 0.5 ? 0 : 1,
+                shootCd: rand(0.6, 1.4)
+            });
+        }
 
-  function spawnItem(){
-    const type = Math.random() < 0.5 ? 'bomb' : 'potion'; // random each 10 seconds
-    items.length = 0; // keep only one at a time
-    items.push({
-      type,
-      x: rand(40, W-40),
-      y: rand(80, H*0.55),
-      r: 20,
-      seed: Math.random() * 10,
-      life: 7.5
-    });
-  }
+        function spawnItem(){
+            const type = Math.random() < 0.5 ? 'bomb' : 'potion'; // random each 10 seconds
+            items.length = 0; // keep only one at a time
+            // 아이템을 더 쉽게 먹도록 화면 아래쪽(플레이어 근처)에 생성
+            const yMin = Math.max(80, H * 0.68);
+            const yMax = H - 140; // 하단 UI/안전영역과 겹침 방지
+            items.push({
+                type,
+                x: rand(40, W-40),
+                y: rand(yMin, yMax),
+                r: 20,
+                seed: Math.random() * 10,
+                life: 7.5
+            });
+        }
 
-  const BOSSES = [
-    { name:'이그니트 (붉은 철갑 기사)', hpBase: 420, r: 70,
-      theme:{ body:'rgba(255,110,110,.92)', armor:'rgba(125,20,35,.85)', face:'rgba(40,10,14,.7)', emblem:'rgba(255,220,220,.85)'},
-      atk: { rate: 0.65, speed: 240 } },
-    { name:'탱크 (사나운 회색곰)', hpBase: 620, r: 78,
-      theme:{ body:'rgba(170,180,190,.95)', armor:'rgba(85,90,100,.85)', face:'rgba(30,30,35,.7)', emblem:'rgba(230,235,240,.85)'},
-      atk: { rate: 0.55, speed: 280 } },
-    { name:'바란 (인간형 악마 괴수)', hpBase: 860, r: 86,
-      theme:{ body:'rgba(170,120,255,.90)', armor:'rgba(70,35,130,.86)', face:'rgba(35,15,55,.75)', emblem:'rgba(240,230,255,.85)'},
-      atk: { rate: 0.48, speed: 320 } }
-  ];
+        const BOSSES = [
+            { name:'이그니트 (붉은 철갑 기사)', hpBase: 420, r: 70,
+                theme:{ body:'rgba(255,110,110,.92)', armor:'rgba(125,20,35,.85)', face:'rgba(40,10,14,.7)', emblem:'rgba(255,220,220,.85)'},
+                atk: { rate: 0.65, speed: 240 } },
+            { name:'탱크 (사나운 회색곰)', hpBase: 620, r: 78,
+                theme:{ body:'rgba(170,180,190,.95)', armor:'rgba(85,90,100,.85)', face:'rgba(30,30,35,.7)', emblem:'rgba(230,235,240,.85)'},
+                atk: { rate: 0.55, speed: 280 } },
+            { name:'바란 (인간형 악마 괴수)', hpBase: 860, r: 86,
+                theme:{ body:'rgba(170,120,255,.90)', armor:'rgba(70,35,130,.86)', face:'rgba(35,15,55,.75)', emblem:'rgba(240,230,255,.85)'},
+                atk: { rate: 0.48, speed: 320 } }
+        ];
 
-  function spawnBoss(stageIdx){
-    const data = BOSSES[stageIdx];
-    boss = {
-      stage: stageIdx+1,
-      name: data.name,
-      x: W/2,
-      y: -data.r - 40,
-      r: data.r,
-      hpMax: data.hpBase + stageIdx*180,
-      hp: data.hpBase + stageIdx*180,
-      vy: 85,
-      enterY: Math.max(120, H*0.22),
-      shootCd: 0.4,
-      atkRate: data.atk.rate,
-      bulletSpeed: data.atk.speed,
-      theme: data.theme
-    };
-    bossNameEl.textContent = `#${boss.stage}`;
-    bigBanner('👑 보스 출현!', data.name);
-    toast(`보스 출현: ${data.name}`);
-  }
+        function spawnBoss(stageIdx){
+            const data = BOSSES[stageIdx];
+            boss = {
+                stage: stageIdx+1,
+                name: data.name,
+                x: W/2,
+                y: -data.r - 40,
+                r: data.r,
+                hpMax: data.hpBase + stageIdx*180,
+                hp: data.hpBase + stageIdx*180,
+                vy: 85,
+                enterY: Math.max(120, H*0.22),
+                shootCd: 0.4,
+                atkRate: data.atk.rate,
+                bulletSpeed: data.atk.speed,
+                theme: data.theme
+            };
+            bossNameEl.textContent = `#${boss.stage}`;
+            bigBanner('👑 보스 출현!', data.name);
+            toast(`보스 출현: ${data.name}`);
+        }
 
-  // ---- Combat
-  function shootSword(dt){
-    player.fireCd -= dt;
-    if(player.fireCd <= 0){
-      player.fireCd = 0.12;
-      const spread = 6;
-      for(let k=0;k<2;k++){
-        bullets.push({
-          x: player.x + (k? 8 : -8),
-          y: player.y - player.r - 6,
-          vx: (k? 1 : -1) * spread,
-          vy: -720,
-          r: 5,
-          dmg: 10
+        // ---- Combat
+        function shootSword(dt){
+            player.fireCd -= dt;
+            if(player.fireCd <= 0){
+                player.fireCd = 0.12;
+                const spread = 6;
+                for(let k=0;k<2;k++){
+                    bullets.push({
+                        x: player.x + (k? 8 : -8),
+                        y: player.y - player.r - 6,
+                        vx: (k? 1 : -1) * spread,
+                        vy: -720,
+                        r: 5,
+                        dmg: 10
+                    });
+                }
+            }
+        }
+
+        function useBomb(){
+            if(state !== STATE.RUN) return;
+            if(player.bombs <= 0){
+                toast('필사기가 없어요! (아이템을 먹어야 해요)');
+                return;
+            }
+            player.bombs--;
+            bombTxt.textContent = player.bombs;
+
+            screenShake(2.2);
+            explode(player.x, player.y, 2);
+
+            for(const e of enemies) explode(e.x, e.y, 1.2);
+            enemies.length = 0;
+
+            for(const b of ebullets) explode(b.x, b.y, 0.7);
+            ebullets.length = 0;
+
+            if(boss){
+                explode(boss.x, boss.y, 2.2);
+                boss = null;
+                bossNameEl.textContent = '-';
+                bossHpTxt.textContent = '-';
+                bossBar.style.width = '0%';
+                toast('💥 필사기! 보스까지 폭발!');
+                world.stage++;
+                if(world.stage >= 3) win();
+            } else {
+                toast('💥 필사기! 화면 정리 완료!');
+            }
+        }
+
+        bombBtn.addEventListener('click', useBomb);
+        // bombBtn.addEventListener('touchstart', (e)=>{ e.preventDefault(); }, {passive:false});
+        // bombBtn.addEventListener('pointerdown', (e)=>{ e.preventDefault(); }, {passive:false});
+
+        function togglePause(){
+            if(state === STATE.RUN){
+                state = STATE.PAUSE;
+                pauseBtn.textContent = '▶️ 재개';
+                toast('일시정지');
+            } else if(state === STATE.PAUSE){
+                state = STATE.RUN;
+                pauseBtn.textContent = '⏸️ 일시정지';
+                world.lastTime = now();
+                toast('재개!');
+            }
+        }
+        pauseBtn.addEventListener('click', togglePause);
+
+        // ---- Collisions
+        function hitCircle(ax,ay,ar,bx,by,br){
+            const dx = ax - bx, dy = ay - by;
+            return dx*dx + dy*dy <= (ar+br)*(ar+br);
+        }
+
+        function damagePlayer(amount){
+            if(player.inv > 0) return;
+            player.hp = Math.max(0, player.hp - amount);
+            player.inv = 0.35;
+            screenShake(0.8);
+            if(player.hp <= 0) lose();
+        }
+
+        function healPlayer(amount){
+            player.hp = Math.min(player.hpMax, player.hp + amount);
+            toast(`💊 에너지 +${amount}`);
+        }
+
+        // ---- End states
+        function lose(){
+            if(world.over) return;
+            world.over = true;
+            state = STATE.END;
+            endScreen.style.display = 'flex';
+            endTitle.textContent = '💀 패배...';
+            endDesc.innerHTML = `성진우의 에너지가 바닥났어요.<br/>기록 시간: <b>${timeTxt.textContent}</b>`;
+        }
+        function win(){
+            if(world.over) return;
+            world.over = true;
+            world.victory = true;
+            state = STATE.END;
+            endScreen.style.display = 'flex';
+            endTitle.textContent = '🏆 승리!';
+            endDesc.innerHTML = `3판왕을 처치했습니다!<br/>기록 시간: <b>${timeTxt.textContent}</b><br/><span style="opacity:.9;">(진우가 하늘에서 검을 거둡니다…)</span>`;
+            bigBanner('🏆 승리!', '3판왕을 모두 처치!');
+            screenShake(2.5);
+            explode(W/2, H/2, 3.0);
+        }
+
+        // ---- Reset
+        function reset(){
+            world.t = 0;
+            world.lastTime = now();
+            world.scroll = 0;
+            world.shake = 0;
+            world.stage = 0;
+            world.nextItemAt = 10;
+            world.over = false;
+            world.victory = false;
+
+            bullets.length = 0;
+            enemies.length = 0;
+            ebullets.length = 0;
+            particles.length = 0;
+            items.length = 0;
+            boss = null;
+
+            player.x = W/2;
+            player.y = H*0.78;
+            target.x = player.x;
+            target.y = player.y;
+            player.hp = 100;
+            player.bombs = 0;
+            player.fireCd = 0;
+            player.inv = 0;
+
+            bossNameEl.textContent = '-';
+            bossHpTxt.textContent = '-';
+            bossBar.style.width = '0%';
+            bombTxt.textContent = '0';
+            toast('준비 완료!');
+            updateHud();
+        }
+
+        function start(){
+            resize();
+            reset();
+            state = STATE.RUN;
+            startScreen.style.display = 'none';
+            endScreen.style.display = 'none';
+            pauseBtn.textContent = '⏸️ 일시정지';
+            toast('시작!');
+            world.lastTime = now();
+        }
+
+        startBtn.addEventListener('click', start);
+        restartBtn.addEventListener('click', () => {
+            endScreen.style.display = 'none';
+            start();
         });
-      }
-    }
-  }
 
-  function useBomb(){
-    if(state !== STATE.RUN) return;
-    if(player.bombs <= 0){
-      toast('필사기가 없어요! (아이템을 먹어야 해요)');
-      return;
-    }
-    player.bombs--;
-    bombTxt.textContent = player.bombs;
+        // ---- Background
+        function drawBackground(dt){
+            world.scroll += dt * 140;
+            const s = world.scroll;
 
-    screenShake(2.2);
-    explode(player.x, player.y, 2);
+            ctx.save();
+            ctx.globalAlpha = 0.35;
+            for(let i=0;i<10;i++){
+                const y = ((i*170 + (s*0.8)) % (H+220)) - 220;
+                const x = (i*97 + (s*0.2)) % (W+200) - 100;
+                ctx.beginPath();
+                ctx.ellipse(x, y, 60, 22, 0, 0, Math.PI*2);
+                ctx.ellipse(x+40, y+6, 44, 18, 0, 0, Math.PI*2);
+                ctx.ellipse(x-38, y+8, 38, 16, 0, 0, Math.PI*2);
+                ctx.fillStyle = 'rgba(255,255,255,.65)';
+                ctx.fill();
+            }
+            ctx.restore();
 
-    for(const e of enemies) explode(e.x, e.y, 1.2);
-    enemies.length = 0;
-
-    for(const b of ebullets) explode(b.x, b.y, 0.7);
-    ebullets.length = 0;
-
-    if(boss){
-      explode(boss.x, boss.y, 2.2);
-      boss = null;
-      bossNameEl.textContent = '-';
-      bossHpTxt.textContent = '-';
-      bossBar.style.width = '0%';
-      toast('💥 필사기! 보스까지 폭발!');
-      world.stage++;
-      if(world.stage >= 3) win();
-    } else {
-      toast('💥 필사기! 화면 정리 완료!');
-    }
-  }
-
-  bombBtn.addEventListener('click', useBomb);
-  // bombBtn.addEventListener('touchstart', (e)=>{ e.preventDefault(); }, {passive:false});
-  // bombBtn.addEventListener('pointerdown', (e)=>{ e.preventDefault(); }, {passive:false});
-
-  function togglePause(){
-    if(state === STATE.RUN){
-      state = STATE.PAUSE;
-      pauseBtn.textContent = '▶️ 재개';
-      toast('일시정지');
-    } else if(state === STATE.PAUSE){
-      state = STATE.RUN;
-      pauseBtn.textContent = '⏸️ 일시정지';
-      world.lastTime = now();
-      toast('재개!');
-    }
-  }
-  pauseBtn.addEventListener('click', togglePause);
-
-  // ---- Collisions
-  function hitCircle(ax,ay,ar,bx,by,br){
-    const dx = ax - bx, dy = ay - by;
-    return dx*dx + dy*dy <= (ar+br)*(ar+br);
-  }
-
-  function damagePlayer(amount){
-    if(player.inv > 0) return;
-    player.hp = Math.max(0, player.hp - amount);
-    player.inv = 0.35;
-    screenShake(0.8);
-    if(player.hp <= 0) lose();
-  }
-
-  function healPlayer(amount){
-    player.hp = Math.min(player.hpMax, player.hp + amount);
-    toast(`💊 에너지 +${amount}`);
-  }
-
-  // ---- End states
-  function lose(){
-    if(world.over) return;
-    world.over = true;
-    state = STATE.END;
-    endScreen.style.display = 'flex';
-    endTitle.textContent = '💀 패배...';
-    endDesc.innerHTML = `성진우의 에너지가 바닥났어요.<br/>기록 시간: <b>${timeTxt.textContent}</b>`;
-  }
-  function win(){
-    if(world.over) return;
-    world.over = true;
-    world.victory = true;
-    state = STATE.END;
-    endScreen.style.display = 'flex';
-    endTitle.textContent = '🏆 승리!';
-    endDesc.innerHTML = `3판왕을 처치했습니다!<br/>기록 시간: <b>${timeTxt.textContent}</b><br/><span style="opacity:.9;">(진우가 하늘에서 검을 거둡니다…)</span>`;
-    bigBanner('🏆 승리!', '3판왕을 모두 처치!');
-    screenShake(2.5);
-    explode(W/2, H/2, 3.0);
-  }
-
-  // ---- Reset
-  function reset(){
-    world.t = 0;
-    world.lastTime = now();
-    world.scroll = 0;
-    world.shake = 0;
-    world.stage = 0;
-    world.nextItemAt = 10;
-    world.over = false;
-    world.victory = false;
-
-    bullets.length = 0;
-    enemies.length = 0;
-    ebullets.length = 0;
-    particles.length = 0;
-    items.length = 0;
-    boss = null;
-
-    player.x = W/2;
-    player.y = H*0.78;
-    target.x = player.x;
-    target.y = player.y;
-    player.hp = 100;
-    player.bombs = 0;
-    player.fireCd = 0;
-    player.inv = 0;
-
-    bossNameEl.textContent = '-';
-    bossHpTxt.textContent = '-';
-    bossBar.style.width = '0%';
-    bombTxt.textContent = '0';
-    toast('준비 완료!');
-    updateHud();
-  }
-
-  function start(){
-    resize();
-    reset();
-    state = STATE.RUN;
-    startScreen.style.display = 'none';
-    endScreen.style.display = 'none';
-    pauseBtn.textContent = '⏸️ 일시정지';
-    toast('시작!');
-    world.lastTime = now();
-  }
-
-  startBtn.addEventListener('click', start);
-  restartBtn.addEventListener('click', () => {
-    endScreen.style.display = 'none';
-    start();
-  });
-
-  // ---- Background
-  function drawBackground(dt){
-    world.scroll += dt * 140;
-    const s = world.scroll;
-
-    ctx.save();
-    ctx.globalAlpha = 0.35;
-    for(let i=0;i<10;i++){
-      const y = ((i*170 + (s*0.8)) % (H+220)) - 220;
-      const x = (i*97 + (s*0.2)) % (W+200) - 100;
-      ctx.beginPath();
-      ctx.ellipse(x, y, 60, 22, 0, 0, Math.PI*2);
-      ctx.ellipse(x+40, y+6, 44, 18, 0, 0, Math.PI*2);
-      ctx.ellipse(x-38, y+8, 38, 16, 0, 0, Math.PI*2);
-      ctx.fillStyle = 'rgba(255,255,255,.65)';
-      ctx.fill();
-    }
-    ctx.restore();
-
-    ctx.save();
-    ctx.globalAlpha = 0.22;
-    ctx.fillStyle = 'rgba(30, 90, 60, 1)';
-    ctx.fillRect(0, H-40, W, 40);
-    ctx.restore();
-  }
-
-  function updateHud(){
-    const t = Math.max(0, world.t);
-    const mm = String(Math.floor(t/60)).padStart(2,'0');
-    const ss = String(Math.floor(t%60)).padStart(2,'0');
-    timeTxt.textContent = `${mm}:${ss}`;
-
-    hpTxt.textContent = Math.round(player.hp);
-    const pct = (player.hp / player.hpMax) * 100;
-    hpBar.style.width = `${pct}%`;
-    hpBar.classList.remove('bad','warn');
-    if(pct < 25) hpBar.classList.add('bad');
-    else if(pct < 50) hpBar.classList.add('warn');
-
-    bombTxt.textContent = player.bombs;
-
-    if(boss){
-      bossNameEl.textContent = `#${boss.stage}`;
-      bossHpTxt.textContent = `${Math.ceil(boss.hp)}/${boss.hpMax}`;
-      bossBar.style.width = `${(boss.hp / boss.hpMax) * 100}%`;
-      bossBar.classList.remove('bad','warn');
-      const bpct = (boss.hp / boss.hpMax)*100;
-      if(bpct < 25) bossBar.classList.add('bad');
-      else if(bpct < 50) bossBar.classList.add('warn');
-    } else {
-      bossHpTxt.textContent = '-';
-      bossBar.style.width = '0%';
-    }
-  }
-
-  function update(dt){
-    if(state !== STATE.RUN) return;
-
-    world.t += dt;
-    if(player.inv > 0) player.inv = Math.max(0, player.inv - dt);
-
-    // small enemy spawns
-    const spawnRate = clamp(0.17 - world.t*0.0012, 0.06, 0.17);
-    update.spawnCd = (update.spawnCd ?? 0) - dt;
-    if(update.spawnCd <= 0){
-      update.spawnCd = spawnRate;
-      spawnEnemy();
-      if(Math.random() < 0.18) spawnEnemy();
-    }
-
-    // items every 10 sec
-    if(world.t >= world.nextItemAt){
-      world.nextItemAt += 10;
-      spawnItem();
-    }
-
-    // boss every 30 sec (sequential)
-    if(world.stage < 3 && !boss && world.t >= (world.stage+1)*40){
-      spawnBoss(world.stage);
-    }
-
-    // player follow target
-    const dx = target.x - player.x;
-    const dy = target.y - player.y;
-    const dist = Math.hypot(dx,dy);
-    const maxStep = player.speed * dt;
-    if(dist > 0.001){
-      const step = Math.min(dist, maxStep);
-      player.x += (dx/dist) * step;
-      player.y += (dy/dist) * step;
-    }
-    player.x = clamp(player.x, player.r+6, W-player.r-6);
-    player.y = clamp(player.y, 60, H-player.r-16);
-
-    shootSword(dt);
-
-    // bullets
-    for(let i=bullets.length-1;i>=0;i--){
-      const b = bullets[i];
-      b.x += b.vx * dt;
-      b.y += b.vy * dt;
-      if(Math.random()<0.22){
-        particles.push({x:b.x,y:b.y,vx:rand(-30,30),vy:rand(30,90),r:rand(1,2.3),life:0.22,hue:randi(160,210)});
-      }
-      if(b.y < -30 || b.x < -40 || b.x > W+40) bullets.splice(i,1);
-    }
-
-    // enemies
-    for(let i=enemies.length-1;i>=0;i--){
-      const e = enemies[i];
-      e.y += e.vy * dt;
-      e.shootCd -= dt;
-      if(e.shootCd <= 0){
-        e.shootCd = rand(0.9, 1.6) * (1 - clamp(world.t/140, 0, 0.35));
-        ebullets.push({ x:e.x, y:e.y + e.r, vx: rand(-35,35), vy: rand(240, 340), r: 5, dmg: 10 });
-      }
-      if(e.y > H + 50) enemies.splice(i,1);
-    }
-
-    // boss
-    if(boss){
-      if(boss.y < boss.enterY) boss.y += boss.vy * dt;
-      boss.x = W/2 + Math.sin(world.t*0.9) * Math.min(W*0.28, 220);
-
-      boss.shootCd -= dt;
-      if(boss.shootCd <= 0){
-        boss.shootCd = boss.atkRate;
-        const base = boss.bulletSpeed;
-        const n = boss.stage === 1 ? 6 : (boss.stage === 2 ? 8 : 10);
-        const spread = boss.stage === 3 ? 0.9 : 0.7;
-        for(let k=0;k<n;k++){
-          const ang = (-0.9 + (k/(n-1))*1.8) * spread;
-          const vx = Math.sin(ang) * base;
-          const vy = Math.cos(ang) * base;
-          ebullets.push({ x: boss.x + Math.sin(k)*2, y: boss.y + boss.r*0.65, vx, vy, r: 6, dmg: 12 + boss.stage*2 });
+            ctx.save();
+            ctx.globalAlpha = 0.22;
+            ctx.fillStyle = 'rgba(30, 90, 60, 1)';
+            ctx.fillRect(0, H-40, W, 40);
+            ctx.restore();
         }
-        if(boss.stage >= 2){
-          const ax = player.x - boss.x;
-          const ay = player.y - boss.y;
-          const ad = Math.hypot(ax,ay) || 1;
-          ebullets.push({ x: boss.x, y: boss.y+boss.r*0.55, vx: (ax/ad)*base*1.05, vy: (ay/ad)*base*1.05, r: 7, dmg: 16 });
+
+        function updateHud(){
+            const t = Math.max(0, world.t);
+            const mm = String(Math.floor(t/60)).padStart(2,'0');
+            const ss = String(Math.floor(t%60)).padStart(2,'0');
+            timeTxt.textContent = `${mm}:${ss}`;
+
+            hpTxt.textContent = Math.round(player.hp);
+            const pct = (player.hp / player.hpMax) * 100;
+            hpBar.style.width = `${pct}%`;
+            hpBar.classList.remove('bad','warn');
+            if(pct < 25) hpBar.classList.add('bad');
+            else if(pct < 50) hpBar.classList.add('warn');
+
+            bombTxt.textContent = player.bombs;
+
+            if(boss){
+                bossNameEl.textContent = `#${boss.stage}`;
+                bossHpTxt.textContent = `${Math.ceil(boss.hp)}/${boss.hpMax}`;
+                bossBar.style.width = `${(boss.hp / boss.hpMax) * 100}%`;
+                bossBar.classList.remove('bad','warn');
+                const bpct = (boss.hp / boss.hpMax)*100;
+                if(bpct < 25) bossBar.classList.add('bad');
+                else if(bpct < 50) bossBar.classList.add('warn');
+            } else {
+                bossHpTxt.textContent = '-';
+                bossBar.style.width = '0%';
+            }
         }
-      }
-    }
 
-    // enemy bullets
-    for(let i=ebullets.length-1;i>=0;i--){
-      const b = ebullets[i];
-      b.x += b.vx * dt;
-      b.y += b.vy * dt;
-      if(b.y > H+40 || b.x < -60 || b.x > W+60) ebullets.splice(i,1);
-    }
+        function update(dt){
+            if(state !== STATE.RUN) return;
 
-    // items
-    for(let i=items.length-1;i>=0;i--){
-      const it = items[i];
-      it.life -= dt;
-      if(it.life <= 0){ items.splice(i,1); continue; }
-      if(hitCircle(player.x,player.y,player.r, it.x,it.y,it.r)){
-        if(it.type === 'bomb'){
-          player.bombs++;
-          toast('🎁 필사기 획득! (필사기 +1)');
-        } else {
-          healPlayer(28);
+            world.t += dt;
+            if(player.inv > 0) player.inv = Math.max(0, player.inv - dt);
+
+            // small enemy spawns
+            const spawnRate = clamp(0.17 - world.t*0.0012, 0.06, 0.17);
+            update.spawnCd = (update.spawnCd ?? 0) - dt;
+            if(update.spawnCd <= 0){
+                update.spawnCd = spawnRate;
+                spawnEnemy();
+                if(Math.random() < 0.18) spawnEnemy();
+            }
+
+            // items every 10 sec
+            if(world.t >= world.nextItemAt){
+                world.nextItemAt += 10;
+                spawnItem();
+            }
+
+            // boss every 30 sec (sequential)
+            if(world.stage < 3 && !boss && world.t >= (world.stage+1)*40){
+                spawnBoss(world.stage);
+            }
+
+            // player follow target
+            const dx = target.x - player.x;
+            const dy = target.y - player.y;
+            const dist = Math.hypot(dx,dy);
+            const maxStep = player.speed * dt;
+            if(dist > 0.001){
+                const step = Math.min(dist, maxStep);
+                player.x += (dx/dist) * step;
+                player.y += (dy/dist) * step;
+            }
+            player.x = clamp(player.x, player.r+6, W-player.r-6);
+            player.y = clamp(player.y, 60, H-player.r-16);
+
+            shootSword(dt);
+
+            // bullets
+            for(let i=bullets.length-1;i>=0;i--){
+                const b = bullets[i];
+                b.x += b.vx * dt;
+                b.y += b.vy * dt;
+                if(Math.random()<0.22){
+                    particles.push({x:b.x,y:b.y,vx:rand(-30,30),vy:rand(30,90),r:rand(1,2.3),life:0.22,hue:randi(160,210)});
+                }
+                if(b.y < -30 || b.x < -40 || b.x > W+40) bullets.splice(i,1);
+            }
+
+            // enemies
+            for(let i=enemies.length-1;i>=0;i--){
+                const e = enemies[i];
+                e.y += e.vy * dt;
+                e.shootCd -= dt;
+                if(e.shootCd <= 0){
+                    e.shootCd = rand(0.9, 1.6) * (1 - clamp(world.t/140, 0, 0.35));
+                    ebullets.push({ x:e.x, y:e.y + e.r, vx: rand(-35,35), vy: rand(240, 340), r: 5, dmg: 10 });
+                }
+                if(e.y > H + 50) enemies.splice(i,1);
+            }
+
+            // boss
+            if(boss){
+                if(boss.y < boss.enterY) boss.y += boss.vy * dt;
+                boss.x = W/2 + Math.sin(world.t*0.9) * Math.min(W*0.28, 220);
+
+                boss.shootCd -= dt;
+                if(boss.shootCd <= 0){
+                    boss.shootCd = boss.atkRate;
+                    const base = boss.bulletSpeed;
+                    const n = boss.stage === 1 ? 6 : (boss.stage === 2 ? 8 : 10);
+                    const spread = boss.stage === 3 ? 0.9 : 0.7;
+                    for(let k=0;k<n;k++){
+                        const ang = (-0.9 + (k/(n-1))*1.8) * spread;
+                        const vx = Math.sin(ang) * base;
+                        const vy = Math.cos(ang) * base;
+                        ebullets.push({ x: boss.x + Math.sin(k)*2, y: boss.y + boss.r*0.65, vx, vy, r: 6, dmg: 12 + boss.stage*2 });
+                    }
+                    if(boss.stage >= 2){
+                        const ax = player.x - boss.x;
+                        const ay = player.y - boss.y;
+                        const ad = Math.hypot(ax,ay) || 1;
+                        ebullets.push({ x: boss.x, y: boss.y+boss.r*0.55, vx: (ax/ad)*base*1.05, vy: (ay/ad)*base*1.05, r: 7, dmg: 16 });
+                    }
+                }
+            }
+
+            // enemy bullets
+            for(let i=ebullets.length-1;i>=0;i--){
+                const b = ebullets[i];
+                b.x += b.vx * dt;
+                b.y += b.vy * dt;
+                if(b.y > H+40 || b.x < -60 || b.x > W+60) ebullets.splice(i,1);
+            }
+
+            // items
+            for(let i=items.length-1;i>=0;i--){
+                const it = items[i];
+                it.life -= dt;
+                if(it.life <= 0){ items.splice(i,1); continue; }
+                if(hitCircle(player.x,player.y,player.r, it.x,it.y,it.r)){
+                    if(it.type === 'bomb'){
+                        player.bombs++;
+                        toast('🎁 필사기 획득! (필사기 +1)');
+                    } else {
+                        healPlayer(28);
+                    }
+                    items.splice(i,1);
+                }
+            }
+
+            // bullet collisions
+            for(let i=bullets.length-1;i>=0;i--){
+                const b = bullets[i];
+                let used = false;
+
+                for(let j=enemies.length-1;j>=0;j--){
+                    const e = enemies[j];
+                    if(hitCircle(b.x,b.y,b.r, e.x,e.y,e.r)){
+                        e.hp -= b.dmg;
+                        explode(b.x,b.y,0.55);
+                        bullets.splice(i,1);
+                        used = true;
+                        if(e.hp <= 0){
+                            explode(e.x,e.y,1.0);
+                            enemies.splice(j,1);
+                        }
+                        break;
+                    }
+                }
+                if(used) continue;
+
+                if(boss && hitCircle(b.x,b.y,b.r, boss.x,boss.y,boss.r)){
+                    boss.hp -= b.dmg;
+                    explode(b.x,b.y,0.6);
+                    bullets.splice(i,1);
+                    if(boss.hp <= 0){
+                        explode(boss.x, boss.y, 2.2);
+                        screenShake(2.0);
+                        toast(`👑 보스 처치! (${boss.name})`);
+                        boss = null;
+                        world.stage++;
+                        bossNameEl.textContent = '-';
+                        if(world.stage >= 3) win();
+                        else bigBanner('✨ 다음 파트로!', `${world.stage+1}판왕까지 남았어요`);
+                    }
+                }
+            }
+
+            // player hits
+            for(let i=ebullets.length-1;i>=0;i--){
+                const b = ebullets[i];
+                if(hitCircle(player.x,player.y,player.r, b.x,b.y,b.r)){
+                    ebullets.splice(i,1);
+                    explode(b.x,b.y,0.55);
+                    damagePlayer(b.dmg);
+                }
+            }
+            for(let i=enemies.length-1;i>=0;i--){
+                const e = enemies[i];
+                if(hitCircle(player.x,player.y,player.r, e.x,e.y,e.r)){
+                    enemies.splice(i,1);
+                    explode(e.x,e.y,1.0);
+                    damagePlayer(18);
+                }
+            }
+            if(boss && hitCircle(player.x,player.y,player.r, boss.x,boss.y,boss.r*0.9)){
+                damagePlayer(22);
+            }
+
+            // particles
+            for(let i=particles.length-1;i>=0;i--){
+                const p = particles[i];
+                p.life -= dt;
+                p.x += p.vx * dt;
+                p.y += p.vy * dt;
+                p.vx *= Math.pow(0.05, dt);
+                p.vy *= Math.pow(0.05, dt);
+                if(p.life <= 0) particles.splice(i,1);
+            }
+
+            updateHud();
         }
-        items.splice(i,1);
-      }
-    }
 
-    // bullet collisions
-    for(let i=bullets.length-1;i>=0;i--){
-      const b = bullets[i];
-      let used = false;
+        function render(dt){
+            ctx.clearRect(0,0,W,H);
 
-      for(let j=enemies.length-1;j>=0;j--){
-        const e = enemies[j];
-        if(hitCircle(b.x,b.y,b.r, e.x,e.y,e.r)){
-          e.hp -= b.dmg;
-          explode(b.x,b.y,0.55);
-          bullets.splice(i,1);
-          used = true;
-          if(e.hp <= 0){
-            explode(e.x,e.y,1.0);
-            enemies.splice(j,1);
-          }
-          break;
+            // shake
+            const s = world.shake;
+            if(s > 0){
+                world.shake = Math.max(0, s - 40*dt);
+                ctx.save();
+                ctx.translate(rand(-s,s)*0.05, rand(-s,s)*0.05);
+            } else {
+                ctx.save();
+            }
+
+            drawBackground(dt);
+
+            for(const it of items) drawItem(it);
+            for(const e of enemies) drawEnemy(e.x,e.y,e.r,e.kind);
+            if(boss) drawBoss(boss);
+
+            // player bullets
+            ctx.save();
+            for(const b of bullets){
+                ctx.beginPath();
+                ctx.moveTo(b.x, b.y);
+                ctx.lineTo(b.x, b.y + 18);
+                ctx.strokeStyle = 'rgba(124,255,178,.95)';
+                ctx.lineWidth = 3;
+                ctx.lineCap = 'round';
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, 3.2, 0, Math.PI*2);
+                ctx.fillStyle = 'rgba(255,255,255,.88)';
+                ctx.fill();
+            }
+            ctx.restore();
+
+            // enemy bullets
+            ctx.save();
+            for(const b of ebullets){
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, b.r, 0, Math.PI*2);
+                ctx.fillStyle = 'rgba(255, 107, 107, .88)';
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(b.x-1.5, b.y-1.5, b.r*0.35, 0, Math.PI*2);
+                ctx.fillStyle = 'rgba(255,255,255,.6)';
+                ctx.fill();
+            }
+            ctx.restore();
+
+            // player
+            ctx.save();
+            if(player.inv > 0) ctx.globalAlpha = 0.55 + 0.45*Math.sin(world.t*30);
+            drawJinwoo(player.x, player.y, 1.0);
+            ctx.restore();
+
+            // particles
+            ctx.save();
+            for(const p of particles){
+                const a = clamp(p.life/0.6, 0, 1);
+                ctx.globalAlpha = a;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+                ctx.fillStyle = `hsla(${p.hue}, 90%, 70%, 1)`;
+                ctx.fill();
+            }
+            ctx.restore();
+
+            ctx.restore();
+
+            if(state === STATE.RUN && !dragging){
+                ctx.save();
+                ctx.globalAlpha = 0.15;
+                ctx.fillStyle = 'rgba(0,0,0,1)';
+                ctx.font = '900 12px system-ui';
+                ctx.textAlign = 'center';
+                ctx.fillText('드래그/터치로 이동', W/2, H-18);
+                ctx.restore();
+            }
         }
-      }
-      if(used) continue;
 
-      if(boss && hitCircle(b.x,b.y,b.r, boss.x,boss.y,boss.r)){
-        boss.hp -= b.dmg;
-        explode(b.x,b.y,0.6);
-        bullets.splice(i,1);
-        if(boss.hp <= 0){
-          explode(boss.x, boss.y, 2.2);
-          screenShake(2.0);
-          toast(`👑 보스 처치! (${boss.name})`);
-          boss = null;
-          world.stage++;
-          bossNameEl.textContent = '-';
-          if(world.stage >= 3) win();
-          else bigBanner('✨ 다음 파트로!', `${world.stage+1}판왕까지 남았어요`);
+        function loop(){
+            const t = now();
+            const dt = Math.min(0.033, Math.max(0.001, (t - world.lastTime) / 1000));
+            world.lastTime = t;
+
+            if(state === STATE.RUN){
+                update(dt);
+                render(dt);
+
+                if(player.hp > 0 && player.hp < 30 && (loop.warnCd ?? 0) <= 0){
+                    loop.warnCd = 2.4;
+                    toast('⚠️ 에너지가 낮아요! 힐링포션을 찾으세요!');
+                }
+                loop.warnCd = Math.max(0, (loop.warnCd ?? 0) - dt);
+            } else if(state === STATE.PAUSE){
+                render(0);
+                ctx.save();
+                ctx.globalAlpha = 0.35;
+                ctx.fillStyle = 'rgba(0,0,0,1)';
+                ctx.fillRect(0,0,W,H);
+                ctx.globalAlpha = 0.95;
+                ctx.fillStyle = '#fff';
+                ctx.font = '1000 28px system-ui';
+                ctx.textAlign = 'center';
+                ctx.fillText('일시정지', W/2, H/2 - 10);
+                ctx.font = '800 14px system-ui';
+                ctx.globalAlpha = 0.85;
+                ctx.fillText('우측 아래 버튼으로 재개', W/2, H/2 + 18);
+                ctx.restore();
+            } else {
+                render(0);
+            }
+
+            requestAnimationFrame(loop);
         }
-      }
-    }
 
-    // player hits
-    for(let i=ebullets.length-1;i>=0;i--){
-      const b = ebullets[i];
-      if(hitCircle(player.x,player.y,player.r, b.x,b.y,b.r)){
-        ebullets.splice(i,1);
-        explode(b.x,b.y,0.55);
-        damagePlayer(b.dmg);
-      }
-    }
-    for(let i=enemies.length-1;i>=0;i--){
-      const e = enemies[i];
-      if(hitCircle(player.x,player.y,player.r, e.x,e.y,e.r)){
-        enemies.splice(i,1);
-        explode(e.x,e.y,1.0);
-        damagePlayer(18);
-      }
-    }
-    if(boss && hitCircle(player.x,player.y,player.r, boss.x,boss.y,boss.r*0.9)){
-      damagePlayer(22);
-    }
+        window.addEventListener('keydown', (e)=>{
+            if(e.key === ' '){ e.preventDefault(); useBomb(); }
+            if(e.key.toLowerCase() === 'p'){ togglePause(); }
+            if(e.key === 'Escape'){ togglePause(); }
+        });
 
-    // particles
-    for(let i=particles.length-1;i>=0;i--){
-      const p = particles[i];
-      p.life -= dt;
-      p.x += p.vx * dt;
-      p.y += p.vy * dt;
-      p.vx *= Math.pow(0.05, dt);
-      p.vy *= Math.pow(0.05, dt);
-      if(p.life <= 0) particles.splice(i,1);
-    }
+        document.addEventListener('gesturestart', (e)=>e.preventDefault(), {passive:false});
 
-    updateHud();
-  }
+        // init
+        resize();
+        reset();
+        requestAnimationFrame(loop);
 
-  function render(dt){
-    ctx.clearRect(0,0,W,H);
-
-    // shake
-    const s = world.shake;
-    if(s > 0){
-      world.shake = Math.max(0, s - 40*dt);
-      ctx.save();
-      ctx.translate(rand(-s,s)*0.05, rand(-s,s)*0.05);
-    } else {
-      ctx.save();
-    }
-
-    drawBackground(dt);
-
-    for(const it of items) drawItem(it);
-    for(const e of enemies) drawEnemy(e.x,e.y,e.r,e.kind);
-    if(boss) drawBoss(boss);
-
-    // player bullets
-    ctx.save();
-    for(const b of bullets){
-      ctx.beginPath();
-      ctx.moveTo(b.x, b.y);
-      ctx.lineTo(b.x, b.y + 18);
-      ctx.strokeStyle = 'rgba(124,255,178,.95)';
-      ctx.lineWidth = 3;
-      ctx.lineCap = 'round';
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.arc(b.x, b.y, 3.2, 0, Math.PI*2);
-      ctx.fillStyle = 'rgba(255,255,255,.88)';
-      ctx.fill();
-    }
-    ctx.restore();
-
-    // enemy bullets
-    ctx.save();
-    for(const b of ebullets){
-      ctx.beginPath();
-      ctx.arc(b.x, b.y, b.r, 0, Math.PI*2);
-      ctx.fillStyle = 'rgba(255, 107, 107, .88)';
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(b.x-1.5, b.y-1.5, b.r*0.35, 0, Math.PI*2);
-      ctx.fillStyle = 'rgba(255,255,255,.6)';
-      ctx.fill();
-    }
-    ctx.restore();
-
-    // player
-    ctx.save();
-    if(player.inv > 0) ctx.globalAlpha = 0.55 + 0.45*Math.sin(world.t*30);
-    drawJinwoo(player.x, player.y, 1.0);
-    ctx.restore();
-
-    // particles
-    ctx.save();
-    for(const p of particles){
-      const a = clamp(p.life/0.6, 0, 1);
-      ctx.globalAlpha = a;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
-      ctx.fillStyle = `hsla(${p.hue}, 90%, 70%, 1)`;
-      ctx.fill();
-    }
-    ctx.restore();
-
-    ctx.restore();
-
-    if(state === STATE.RUN && !dragging){
-      ctx.save();
-      ctx.globalAlpha = 0.15;
-      ctx.fillStyle = 'rgba(0,0,0,1)';
-      ctx.font = '900 12px system-ui';
-      ctx.textAlign = 'center';
-      ctx.fillText('드래그/터치로 이동', W/2, H-18);
-      ctx.restore();
-    }
-  }
-
-  function loop(){
-    const t = now();
-    const dt = Math.min(0.033, Math.max(0.001, (t - world.lastTime) / 1000));
-    world.lastTime = t;
-
-    if(state === STATE.RUN){
-      update(dt);
-      render(dt);
-
-      if(player.hp > 0 && player.hp < 30 && (loop.warnCd ?? 0) <= 0){
-        loop.warnCd = 2.4;
-        toast('⚠️ 에너지가 낮아요! 힐링포션을 찾으세요!');
-      }
-      loop.warnCd = Math.max(0, (loop.warnCd ?? 0) - dt);
-    } else if(state === STATE.PAUSE){
-      render(0);
-      ctx.save();
-      ctx.globalAlpha = 0.35;
-      ctx.fillStyle = 'rgba(0,0,0,1)';
-      ctx.fillRect(0,0,W,H);
-      ctx.globalAlpha = 0.95;
-      ctx.fillStyle = '#fff';
-      ctx.font = '1000 28px system-ui';
-      ctx.textAlign = 'center';
-      ctx.fillText('일시정지', W/2, H/2 - 10);
-      ctx.font = '800 14px system-ui';
-      ctx.globalAlpha = 0.85;
-      ctx.fillText('우측 아래 버튼으로 재개', W/2, H/2 + 18);
-      ctx.restore();
-    } else {
-      render(0);
-    }
-
-    requestAnimationFrame(loop);
-  }
-
-  window.addEventListener('keydown', (e)=>{
-    if(e.key === ' '){ e.preventDefault(); useBomb(); }
-    if(e.key.toLowerCase() === 'p'){ togglePause(); }
-    if(e.key === 'Escape'){ togglePause(); }
-  });
-
-  document.addEventListener('gesturestart', (e)=>e.preventDefault(), {passive:false});
-
-  // init
-  resize();
-  reset();
-  requestAnimationFrame(loop);
-
-  // Start screen handlers
-  startBtn.addEventListener('click', start);
-})();
+        // Start screen handlers
+        startBtn.addEventListener('click', start);
+    })();
 </script>
 </body>
 </html>
