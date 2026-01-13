@@ -801,7 +801,13 @@
                 atk: { rate: 0.55, speed: 280 } },
             { name:'바란 (인간형 악마 괴수)', hpBase: 860, r: 86,
                 theme:{ body:'rgba(170,120,255,.90)', armor:'rgba(70,35,130,.86)', face:'rgba(35,15,55,.75)', emblem:'rgba(240,230,255,.85)'},
-                atk: { rate: 0.48, speed: 320 } }
+                atk: { rate: 0.48, speed: 320 } },
+            { name:'혼돈의 군주', hpBase: 900, r: 90,
+                theme:{ body:'rgba(170,120,255,.90)', armor:'rgba(70,35,130,.86)', face:'rgba(35,15,55,.75)', emblem:'rgba(240,230,255,.85)'},
+                atk: { rate: 0.48, speed: 320 } },
+            { name:'파멸의 군주', hpBase: 1000, r: 100,
+                theme:{ body:'rgba(170,120,255,.90)', armor:'rgba(70,35,130,.86)', face:'rgba(35,15,55,.75)', emblem:'rgba(240,230,255,.85)'},
+                atk: { rate: 0.40, speed: 400 } }
         ];
 
         function spawnBoss(stageIdx){
@@ -1199,7 +1205,7 @@
                         boss = null;
                         world.stage++;
                         bossNameEl.textContent = '-';
-                        if(world.stage >= 3) win();
+                        if(world.stage >= 5) win();
                         else bigBanner('✨ 다음 파트로!', `${world.stage+1}판왕까지 남았어요`);
                     }
                 }
