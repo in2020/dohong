@@ -272,6 +272,17 @@
     <div class="card">
         <div id="endTitle" class="title">끝!</div>
         <div id="endDesc" class="desc"></div>
+
+        <div style="margin-top:14px; padding-top:12px; border-top:1px solid rgba(255,255,255,.18);">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+                <div style="font-weight:1000;">🏅 랭킹 <span id="rankStatus" style="font-weight:900; font-size:12px; opacity:.85;"></span></div>
+                <button id="rankRefreshBtn" class="primary" type="button" style="margin-top:0; width:auto; padding:10px 12px; border-radius:14px; font-size:13px;">
+                    새로고침
+                </button>
+            </div>
+            <div id="rankMe" class="smallNote" style="margin-top:8px;"></div>
+            <div id="rankList" style="margin-top:10px; display:flex; flex-direction:column; gap:8px; max-height:240px; overflow:auto; padding-right:4px;"></div>
+        </div>
         <button id="restartBtn" class="primary" type="button">다시 시작</button>
         <div class="smallNote">F5도 가능하지만, 모바일은 버튼이 편해요.</div>
     </div>
@@ -301,6 +312,10 @@
         const restartBtn = document.getElementById('restartBtn');
         const endTitle = document.getElementById('endTitle');
         const endDesc = document.getElementById('endDesc');
+        const rankStatus = document.getElementById('rankStatus');
+        const rankList = document.getElementById('rankList');
+        const rankMe = document.getElementById('rankMe');
+        const rankRefreshBtn = document.getElementById('rankRefreshBtn');
 
         const bombBtn = document.getElementById('bombBtn');
         const pauseBtn = document.getElementById('pauseBtn');
@@ -310,6 +325,155 @@
         const rand = (a, b) => a + Math.random() * (b - a);
         const randi = (a, b) => Math.floor(rand(a, b+1));
         const now = () => performance.now();
+
+        // ===== Ranking / Name =====
+        const GAME_ID = "jinwoo-1945";
+        const NAME_KEY = "jinwoo_player_name";
+        const API_SCORE = "/api/score"; // 점수 등록 (POST)
+        const API_LEADERBOARD = "/api/leaderboard"; // 랭킹 조회 (GET)
+
+        function normalizeName(v){
+            return String(v || "")
+                .trim()
+                .slice(0, 12)
+                .replace(/[^\w가-힣]/g, "");
+        }
+
+        function askPlayerName(){
+            let name = normalizeName(localStorage.getItem(NAME_KEY));
+            if(name) return name;
+
+            while(true){
+                const input = prompt("닉네임을 입력하세요 (최대 12자)");
+                if(input === null) return ""; // 취소
+                name = normalizeName(input);
+                if(name){
+                    localStorage.setItem(NAME_KEY, name);
+                    return name;
+                }
+                alert("닉네임을 다시 입력해주세요.");
+            }
+        }
+
+        function formatSeconds(sec){
+            const s = Math.max(0, Math.floor(Number(sec) || 0));
+            const hh = Math.floor(s / 3600);
+            const mm = Math.floor((s % 3600) / 60);
+            const ss = s % 60;
+            if(hh > 0) return `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+            return `${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+        }
+
+        async function submitScore(finalSeconds){
+            const name = normalizeName(localStorage.getItem(NAME_KEY) || "");
+            if(!name) return;
+
+            const payload = {
+                name,
+                gameId: GAME_ID,
+                score: Math.floor(Number(finalSeconds) || 0), // ⏱️ 초 단위
+                meta: {
+                    victory: !!world.victory,
+                    stage: world.stage,
+                    ua: navigator.userAgent.slice(0,120)
+                }
+            };
+
+            try{
+                await fetch(API_SCORE, {
+                    method:"POST",
+                    headers:{ "Content-Type":"application/json" },
+                    body: JSON.stringify(payload)
+                });
+            }catch(e){
+                console.warn("score submit failed", e);
+            }
+        }
+
+        function renderLeaderboard(rows, myName){
+            rankList.innerHTML = "";
+            const top = rows.slice(0, 10);
+
+            for(let i=0;i<top.length;i++){
+                const r = top[i] || {};
+                const nm = normalizeName(r.name ?? r.nickname ?? "");
+                const sc = Number(r.score ?? r.time ?? r.seconds ?? 0);
+
+                const item = document.createElement("div");
+                const isMe = myName && nm && (nm === myName);
+
+                item.style.display = "flex";
+                item.style.justifyContent = "space-between";
+                item.style.alignItems = "center";
+                item.style.gap = "10px";
+                item.style.padding = "10px 12px";
+                item.style.borderRadius = "14px";
+                item.style.border = "1px solid rgba(255,255,255,.18)";
+                item.style.background = isMe ? "rgba(124,255,178,.18)" : "rgba(255,255,255,.10)";
+                item.style.fontWeight = "900";
+                item.style.fontSize = "13px";
+
+                const left = document.createElement("div");
+                left.style.display = "flex";
+                left.style.gap = "10px";
+                left.style.alignItems = "center";
+
+                const rank = document.createElement("span");
+                rank.textContent = `#${i+1}`;
+                rank.style.opacity = "0.9";
+
+                const nameEl = document.createElement("span");
+                nameEl.textContent = nm || "(noname)";
+                nameEl.style.whiteSpace = "nowrap";
+                nameEl.style.overflow = "hidden";
+                nameEl.style.textOverflow = "ellipsis";
+                nameEl.style.maxWidth = "220px";
+
+                left.appendChild(rank);
+                left.appendChild(nameEl);
+
+                const scoreEl = document.createElement("div");
+                scoreEl.textContent = formatSeconds(sc);
+                scoreEl.style.opacity = "0.95";
+                scoreEl.style.fontVariantNumeric = "tabular-nums";
+
+                item.appendChild(left);
+                item.appendChild(scoreEl);
+
+                rankList.appendChild(item);
+            }
+
+            if(!top.length){
+                rankList.innerHTML = `<div style="font-size:12px;opacity:.75;line-height:1.4;">기록이 아직 없어!</div>`;
+            }
+        }
+
+        async function fetchLeaderboard(){
+            rankStatus.textContent = "불러오는 중…";
+            rankList.innerHTML = "";
+            const myName = normalizeName(localStorage.getItem(NAME_KEY) || "");
+            rankMe.textContent = myName ? `내 닉네임: ${myName}` : "";
+
+            try{
+                const url = new URL(API_LEADERBOARD, location.origin);
+                url.searchParams.set("gameId", GAME_ID);
+                const res = await fetch(url.toString(), { method:"GET", headers:{ "Accept":"application/json" } });
+                if(!res.ok) throw new Error("leaderboard http " + res.status);
+                const data = await res.json();
+
+                const rows = Array.isArray(data) ? data : (Array.isArray(data?.rows) ? data.rows : []);
+                rankStatus.textContent = rows.length ? `TOP ${Math.min(rows.length, 10)}` : "기록이 아직 없어!";
+                renderLeaderboard(rows, myName);
+            }catch(err){
+                console.warn(err);
+                rankStatus.textContent = "랭킹 불러오기 실패(서버 확인)";
+                rankList.innerHTML = `<div style="font-size:12px;opacity:.75;line-height:1.4;">
+                    서버가 없거나 CORS 설정이 안 되어 있으면 실패해.<br/>
+                    API_LEADERBOARD 경로/서버를 확인해줘.
+                </div>`;
+            }
+        }
+
 
         // ---- Resize
         let W=0,H=0,DPR=1;
@@ -758,6 +922,7 @@
             endScreen.style.display = 'flex';
             endTitle.textContent = '💀 패배...';
             endDesc.innerHTML = `성진우의 에너지가 바닥났어요.<br/>기록 시간: <b>${timeTxt.textContent}</b>`;
+            submitScore(world.t).finally(()=>fetchLeaderboard());
         }
         function win(){
             if(world.over) return;
@@ -767,6 +932,7 @@
             endScreen.style.display = 'flex';
             endTitle.textContent = '🏆 승리!';
             endDesc.innerHTML = `3판왕을 처치했습니다!<br/>기록 시간: <b>${timeTxt.textContent}</b><br/><span style="opacity:.9;">(진우가 하늘에서 검을 거둡니다…)</span>`;
+            submitScore(world.t).finally(()=>fetchLeaderboard());
             bigBanner('🏆 승리!', '3판왕을 모두 처치!');
             screenShake(2.5);
             explode(W/2, H/2, 3.0);
@@ -808,13 +974,19 @@
         }
 
         function start(){
+            const name = askPlayerName();
+            if(!name){
+                toast('닉네임이 필요해요!');
+                return;
+            }
+
             resize();
             reset();
             state = STATE.RUN;
             startScreen.style.display = 'none';
             endScreen.style.display = 'none';
             pauseBtn.textContent = '⏸️ 일시정지';
-            toast('시작!');
+            toast(`시작! (${normalizeName(localStorage.getItem(NAME_KEY) || '')})`);
             world.lastTime = now();
         }
 
@@ -822,6 +994,8 @@
         restartBtn.addEventListener('click', () => {
             endScreen.style.display = 'none';
             start();
+
+            rankRefreshBtn.addEventListener('click', ()=>fetchLeaderboard());
         });
 
         // ---- Background
